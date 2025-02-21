@@ -18,6 +18,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion"
 import LayerList from "./layers/LayerList"
+import { getPublicPath } from "@/lib/utils"
 
 const menuItems = [
   {
@@ -40,7 +41,7 @@ export default function AppSidebar() {
       <SidebarHeader className="h-16 flex items-center justify-center">
         <div className="flex items-center justify-center">
             <img 
-            src="/logo.png" 
+            src={getPublicPath("/logo.png")} 
             alt="SharkGIS" 
             className={`transition-all duration-200 ease-linear ${
                 state === "expanded" ? "w-14 h-14" : "w-8 h-8"
