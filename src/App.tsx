@@ -2,7 +2,7 @@ import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
 import AppSidebar from './components/AppSidebar'
 import './App.css'
 import Map from './components/Map'
-import NewLayerButton from './components/NewLayerButton'
+import NewLayerButton from './components/layers/NewLayerButton'
 
 function App() {
   return (
