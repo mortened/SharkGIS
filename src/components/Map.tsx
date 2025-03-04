@@ -1,13 +1,28 @@
 import { useRef, useEffect } from 'react'
-//import type { Map as MapboxMap } from 'mapbox-gl
+//import type { Map as MapboxMap } from 'mapbox-gl'
 import mapboxgl from 'mapbox-gl'
-import { useLayers } from '@/hooks/useLayers'
+import { useMapStore } from '@/hooks/useMapstore'
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN
 
+export const BLANK_STYLE = {
+    version: 8,
+    sources: {},
+    layers: [
+        {
+            id: 'background',
+            type: 'background',
+            paint: {
+                'background-color': 'transparent'
+            }
+        }
+    ]
+}
+
 function Map() { 
     const mapContainer = useRef<HTMLDivElement>(null)
-    const {setMap} = useLayers()
+    //const {setMap} = useLayers()
+    const { setMap } = useMapStore()
     //const map = useRef<MapboxMap | null>(null)
     
     useEffect(() => {
