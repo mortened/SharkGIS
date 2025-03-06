@@ -31,13 +31,13 @@ export default function LayerItem({
     
 
     return(
-        <div className="flex items-center justify-between px-2 py-1">
+        <div className="flex items-center justify-between p-4">
             <h3>{name}</h3>
             <div className="flex items-center gap-2 justify-end">
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild className="transition-all duration-900 hover:scale-110">
                         <Ellipsis 
-                            className="h-5 w-5 cursor-pointer hover:shadow-lg hover:bg-black/10 transition-shadow rounded-full p-0.5" 
+                            className="h-5 w-5 cursor-pointer hover:shadow-lg text-black hover:bg-black/10 transition-shadow rounded-full p-0.5" 
                         />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="p-2">
@@ -67,12 +67,12 @@ export default function LayerItem({
                 
                 {isVisible ? (
                     <Eye 
-                        className="h-5 w-5 cursor-pointer hover:shadow-lg hover:bg-black/10 transition-shadow duration-900 rounded-full p-0.5 hover:scale-110" 
+                        className="h-5 w-5 cursor-pointer hover:shadow-lg text-black hover:bg-black/10 transition-shadow duration-900 rounded-full p-0.5 hover:scale-110" 
                         onClick={() => {onToggleVisibility()}}
                     />
                 ) : (
                     <EyeClosed 
-                        className="h-5 w-5 cursor-pointer hover:shadow-lg hover:bg-black/10 transition-shadow duration-900 rounded-full p-0.5 hover:scale-110" 
+                        className="h-5 w-5 cursor-pointer hover:shadow-lg text-black hover:bg-black/10 transition-shadow duration-900 rounded-full p-0.5 hover:scale-110" 
                         onClick={() => {onToggleVisibility()}}
                     />
                 )}
