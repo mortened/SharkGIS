@@ -4,6 +4,7 @@ import './App.css'
 import Map from './components/Map'
 import NewLayerButton from './components/layers/NewLayerButton'
 import ToolBar from './components/tools/ToolBar'
+import TopBar from './components/TopBar'
 
 function App() {
   return (
@@ -13,7 +14,8 @@ function App() {
           <SidebarTrigger className="relative z-50 hover:bg-white/90" />
           <Map />
           <NewLayerButton />
-          <ToolBar />
+          {/* <ToolBar /> */}
+          <TopBar />
       </SidebarProvider>
     </div>
   )

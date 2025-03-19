@@ -16,6 +16,7 @@ import {
     title: string
     onSave?: () => void
     children: React.ReactNode
+    description?: string
   }
   
   export function ToolDialogShell({
@@ -24,13 +25,14 @@ import {
     title,
     onSave,
     children,
+    description,
   }: ToolDialogShellProps) {
     return (
       <AlertDialog open={open} onOpenChange={onOpenChange}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{title}</AlertDialogTitle>
-            <AlertDialogDescription>This is the {title} tool dialog.</AlertDialogDescription>
+            <AlertDialogDescription>{description}</AlertDialogDescription>
           </AlertDialogHeader>
           {children}
           <AlertDialogFooter>

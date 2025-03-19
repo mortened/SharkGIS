@@ -2,6 +2,10 @@ import { useRef, useEffect } from 'react'
 //import type { Map as MapboxMap } from 'mapbox-gl'
 import mapboxgl from 'mapbox-gl'
 import { useMapStore } from '@/hooks/useMapstore'
+import MapboxDraw from "@mapbox/mapbox-gl-draw";
+import "@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css"
+import { useDrawStore } from '@/hooks/useDrawStore';
+
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN
 
@@ -21,6 +25,7 @@ export const BLANK_STYLE = {
 
 function Map() { 
     const mapContainer = useRef<HTMLDivElement>(null)
+    const drawRef = useRef<MapboxDraw | null>(null)
     //const {setMap} = useLayers()
     const { setMap } = useMapStore()
     //const map = useRef<MapboxMap | null>(null)
@@ -35,8 +40,19 @@ function Map() {
             zoom: 12
         })
 
+        drawRef.current = new MapboxDraw({
+            displayControlsDefault: true,
+        })
+
+        map.addControl(drawRef.current, 'top-left')
+        useDrawStore.getState().setDraw(drawRef.current)
+
         map.on('load', () => {
             setMap(map)
+        })
+
+        map.on('draw.create', (e) => {
+            console.log(e)
         })
 
         return () => map.remove()

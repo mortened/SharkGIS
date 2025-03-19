@@ -157,7 +157,7 @@ SidebarProvider.displayName = "SidebarProvider"
 const Sidebar = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> & {
-    side?: "left" | "right" | "bottom"
+    side?: "left" | "right" | "bottom" | "top"
     variant?: "sidebar" | "floating" | "inset"
     collapsible?: "offcanvas" | "icon" | "none"
   }
@@ -203,7 +203,22 @@ const Sidebar = React.forwardRef<
           <div className="flex h-full w-full flex-col">{children}</div>
         </div>
       )
+    } else if (side === "top") {
+      return (
+        <div
+          className={cn(
+            "fixed inset-x-0 top-8 z-10 hidden bg-sidebar text-sidebar-foreground md:flex w-fit m-auto rounded-xl shadow",
+            className
+          )}
+          ref={ref}
+          {...props}
+        >
+          <div className="flex h-full w-full flex-col">{children}</div>
+        </div>
+      )
     }
+
+    
 
     if (isMobile) {
       return (

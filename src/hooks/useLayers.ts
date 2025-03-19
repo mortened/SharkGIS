@@ -24,10 +24,12 @@ interface LayerState {
     reorderLayers: (fromIndex: number, toIndex: number) => void
 }
 
+
 export const useLayers = create<LayerState>((set, get) => ({
     layers: [],
     // map: null,
     // setMap: (map) => set({ map }),
+    
 
     addLayer: (layer) => {
         // const map = get().map;
