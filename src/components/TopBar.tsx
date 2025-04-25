@@ -46,9 +46,35 @@ export default function TopBar() {
     
 
     function saveLayer(draw: FeatureCollection | null): void {
-        if (!draw) return
-        console.log(draw)
+        if (!draw || draw.features.length === 0) return
 
+        // Check if the features are valid
+        const hasValidFeatures = draw.features.some(feature => {
+            const geometry = feature.geometry
+
+            if (geometry.type === 'Point') {
+                return Array.isArray(geometry.coordinates) && geometry.coordinates.length === 2
+            }
+
+            if (geometry.type === 'LineString') {
+                return Array.isArray(geometry.coordinates) && geometry.coordinates.length >= 2
+            }
+
+            if (geometry.type === 'Polygon') {
+                return Array.isArray(geometry.coordinates) &&
+                    Array.isArray(geometry.coordinates[0]) &&
+                    geometry.coordinates[0].length >= 3
+            }
+
+            return false
+        })
+
+        if (!hasValidFeatures) return
+
+
+        console.log(draw)
+        const geomType = draw.features[0].geometry.type 
+        
         //Add layer to the store
         addLayer({
             id: `layer-${layers.length + 1}`,
@@ -57,7 +83,7 @@ export default function TopBar() {
             fillColor: "#ff0000",
             fillOpacity: 0.5,
             visible: true,
-            geometryType: activeGeometry as any,
+            geometryType: geomType as 'Point' | 'LineString' | 'Polygon' | 'MultiPoint' | 'MultiLineString' | 'MultiPolygon'
         }, "#ff0000", 0.5)
 
     }
@@ -69,7 +95,7 @@ export default function TopBar() {
         
         <div className="flex flex-row justify-center">
 
-            <Button variant="ghost" size="lg" onClick={() => setIsDialogOpen(true)} className="flex flex-row items-center" disabled={isDisabled}>
+            <Button variant="ghost" size="default" onClick={() => setIsDialogOpen(true)} className="flex flex-row items-center" disabled={isDisabled}>
                 <Plus className="h-8 w-8" />
                 <span className="text-xs">Upload</span>
 
@@ -95,32 +121,41 @@ export default function TopBar() {
     {isDisabled && (
         <Sidebar side="bottom" className="bg-white/90">
             <div className="flex flex-row justify-center">
-                <Button variant="ghost" size="sm" onClick={() => setIsDisabled(false)}>
+                <Button variant="ghost" size="default" onClick={() => {
+                    if (!draw) return
+                    draw.deleteAll()
+                    setActiveGeometry(null)
+                    setCloseSidebar(true)
+                    setOpen(false)
+                    setIsDisabled(false)
+                }
+
+                }>
                     <X className="h-8 w-8" />
-                    <span className="text-xs">Cancel</span>
+                    <span className="text-base">Cancel</span>
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => {
+                <Button variant="ghost" size="default" onClick={() => {
                     if (!draw) return
                     draw.deleteAll()
                     drawLayer(activeGeometry!)
                 }}>
                     <RotateCcw className="h-8 w-8" />
-                    <span className="text-xs">Clear all</span>
+                    <span className="text-base">Clear all</span>
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => {
+                <Button variant="ghost" size="default" onClick={() => {
                     drawLayer(activeGeometry!)
                 }
                 }>
                     <Plus className="h-8 w-8" />
-                    <span className="text-xs">Add another</span>
+                    <span className="text-base">Add another</span>
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => {
+                <Button variant="ghost" size="default" onClick={() => {
                     setIsDisabled(false)
-                    saveLayer(draw?.getAll())
+                    saveLayer(draw?.getAll() ?? null)
                     draw?.deleteAll()
                 }}>
                     <Check className="h-8 w-8" />
-                    <span className="text-xs">Finish</span>
+                    <span className="text-base">Finish</span>
                 </Button>
             </div>
         </Sidebar>
