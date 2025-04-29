@@ -3,7 +3,6 @@ import { Sidebar } from "../ui/sidebar"
 import { Button } from "../ui/button"
 import { getPublicPath } from "@/lib/utils"
 import { BufferDialog } from "./BufferDialog"
-import { IntersectDialog } from "./IntersectDialog"
 import PolygonToolDialog from "./PolygonToolDialog"
 
 const ToolBarItems = [
@@ -66,7 +65,7 @@ export default function ToolBar() {
             open={isDialogOpen}
             onOpenChange={setIsDialogOpen}
             operation="Intersect"
-            desriptopn="Finds the overlapping area between two or more input layers, returning only the portions where they overlap."
+            description="Finds the overlapping area between two or more input layers, returning only the portions where they overlap."
           />
         )}
 
@@ -75,7 +74,7 @@ export default function ToolBar() {
             open={isDialogOpen}
             onOpenChange={setIsDialogOpen}
             operation="Union"
-            desriptopn="Combines two polygon layers into one layer that includes all areas from each input. Overlapping regions become separate features, reflecting all layer combinations."
+            description="Combines two polygon layers into one layer that includes all areas from each input. Overlapping regions become separate features, reflecting all layer combinations."
           />
         )}
 
@@ -84,7 +83,7 @@ export default function ToolBar() {
             open={isDialogOpen}
             onOpenChange={setIsDialogOpen}
             operation="Difference"
-            desriptopn="Removes areas of overlap from one layer by using another. Anything outside the overlap is retained, while the overlapping part is subtracted."
+            description="Removes areas of overlap from one layer by using another. Anything outside the overlap is retained, while the overlapping part is subtracted."
           />
         )}
 

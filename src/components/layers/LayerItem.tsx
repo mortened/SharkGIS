@@ -20,7 +20,7 @@ export default function LayerItem({
     isVisible: propIsVisible,
     onToggleVisibility
 }: LayerItemProps){
-    const { layers, toggleLayer } = useLayers();
+    const { layers } = useLayers();
     const layer = layers.find(l => l.id === id);
     const isBaseLayer = id === "base";
     const isVisible = isBaseLayer 

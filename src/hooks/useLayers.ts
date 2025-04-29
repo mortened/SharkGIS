@@ -1,6 +1,5 @@
 import { create } from "zustand"
 import type { FeatureCollection } from "geojson"
-import type { Map } from 'mapbox-gl'
 import { useMapStore } from "./useMapstore"
 
 export interface Layer {
@@ -51,7 +50,7 @@ export const useLayers = create<LayerState>((set, get) => ({
             return;
         }
 
-        let layerType = 'fill'; // Default to fill for polygons
+        let layerType: 'fill' | 'circle' | 'line' = 'fill'; // Default to fill for polygons
 
         if (geomType === 'Point' || geomType === 'MultiPoint') {
             layerType = 'circle'; // Use circle for points

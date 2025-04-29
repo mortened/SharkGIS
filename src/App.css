@@ -76,3 +76,9 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* HACK: prevents map from freezing when a leaking RemoveScrollBar
+   leaves `pointer-events:none` on <body>.  Remove after leak is fixed. */
+body:not([data-scroll-locked]) {
+  pointer-events: auto !important;
+}

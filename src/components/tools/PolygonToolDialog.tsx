@@ -1,11 +1,12 @@
 import { useState } from "react"
 import { ToolDialogShell } from "./ToolDialogShell"
-import { Input } from "../ui/input"
 import * as turf from "@turf/turf"
 import { useLayers } from "@/hooks/useLayers"
 import { FeatureCollection, Polygon, MultiPolygon, Feature } from "geojson"
 import { v4 as uuidv4 } from 'uuid'
-import { Button } from "../ui/button"
+import { Card, CardContent } from "../ui/card"
+import { LayerSettingsForm } from "../layers/LayerSettingsForm" // or define locally if you prefer
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select"
 import {
   Popover,
   PopoverTrigger,
@@ -13,16 +14,16 @@ import {
 } from "../ui/popover"
 import {
   Command,
-  CommandGroup,
-  CommandItem,
   CommandInput,
   CommandList,
   CommandEmpty,
-} from "@/components/ui/command"
-import { Card, CardContent } from "../ui/card"
+  CommandGroup,
+  CommandItem,
+} from "../ui/command"
+import { Button } from "../ui/button"
 import { Check, ChevronsUpDown } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { LayerSettingsForm } from "../layers/LayerSettingsForm" // or define locally if you prefer
+
 
 // Generic bounding box overlap check
 function bboxesOverlap(a: Feature<Polygon|MultiPolygon>, b: Feature<Polygon|MultiPolygon>) {
@@ -65,15 +66,16 @@ export default function PolygonToolDialog({
   const [selectedFirstLayerId, setSelectedFirstLayerId] = useState("")
   const [selectedSecondLayerId, setSelectedSecondLayerId] = useState("")
 
+
   const selectedFirstLayer = layers.find((ly) => ly.id === selectedFirstLayerId)
   const selectedSecondLayer = layers.find((ly) => ly.id === selectedSecondLayerId)
 
-  const firstButtonLabel = selectedFirstLayer ? selectedFirstLayer.name : "Choose first layer"
-  const secondButtonLabel = selectedSecondLayer ? selectedSecondLayer.name : "Choose second layer"
+  // const firstButtonLabel = selectedFirstLayer ? selectedFirstLayer.name : "Choose first layer"
+  // const secondButtonLabel = selectedSecondLayer ? selectedSecondLayer.name : "Choose second layer"
 
   // Popover states
-  const [openFirst, setOpenFirst] = useState(false)
-  const [openSecond, setOpenSecond] = useState(false)
+  // const [openFirst, setOpenFirst] = useState(false)
+  // const [openSecond, setOpenSecond] = useState(false)
 
   // Called when user clicks "Save"
   function onSave() {
@@ -245,11 +247,39 @@ export default function PolygonToolDialog({
     >
       <Card>
         <CardContent>
-          {/* First layer popover */}
-          <Popover open={openFirst} onOpenChange={setOpenFirst}>
+          
+          <div className="flex items-center justify-between">
+
+          {/* <Select
+            value={selectedFirstLayerId}
+            onValueChange={(id) => {
+                setSelectedFirstLayerId(id)
+            }}
+          >
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Select first layer" />
+            </SelectTrigger>
+            <SelectContent>
+              {layers.length === 0
+                ? <SelectItem value="none" disabled>No layers available</SelectItem>
+                : layers.map((ly) => (
+                    <SelectItem key={ly.id} value={ly.id} disabled={ly.id === selectedSecondLayerId}>
+                      {ly.name}
+                    </SelectItem>
+                ))}
+              
+            </SelectContent>
+          </Select> */}
+
+          {/* Popover select */}
+
+          
+          <Popover>
             <PopoverTrigger asChild>
-              <Button variant="default" role="combobox" className="w-[200px] justify-between">
-                {firstButtonLabel}
+              <Button variant="outline" role="combobox" className="w-[200px] justify-between">
+                {selectedFirstLayerId
+                  ? layers.find((ly) => ly.id === selectedFirstLayerId)?.name
+                  : "Select first layer"}
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
@@ -257,7 +287,7 @@ export default function PolygonToolDialog({
               <Command>
                 <CommandInput placeholder="Search layer..." />
                 <CommandList>
-                  <CommandEmpty>No layers found.</CommandEmpty>
+                  <CommandEmpty>No layer found.</CommandEmpty>
                   <CommandGroup>
                     {layers.map((ly) => (
                       <CommandItem
@@ -265,15 +295,15 @@ export default function PolygonToolDialog({
                         value={ly.name}
                         onSelect={() => {
                           setSelectedFirstLayerId(ly.id)
-                          setOpenFirst(false)
                           setLayerName(`${ly.name}-${operation.toLowerCase()}`)
                         }}
+                        disabled={ly.id === selectedSecondLayerId}
                       >
                         <Check
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            ly.id === selectedFirstLayerId ? "opacity-100" : "opacity-0"
-                          )}
+                          className={cn("mr-2 h-4 w-4", {
+                            "opacity-100": ly.id === selectedFirstLayerId,
+                            "opacity-0": ly.id !== selectedFirstLayerId,
+                          })}
                         />
                         {ly.name}
                       </CommandItem>
@@ -283,12 +313,15 @@ export default function PolygonToolDialog({
               </Command>
             </PopoverContent>
           </Popover>
+          
 
-          {/* Second layer popover */}
-          <Popover open={openSecond} onOpenChange={setOpenSecond}>
+
+          <Popover>
             <PopoverTrigger asChild>
-              <Button variant="default" role="combobox" className="w-[200px] justify-between">
-                {secondButtonLabel}
+              <Button variant="outline" role="combobox" className="w-[200px] justify-between">
+                {selectedSecondLayerId
+                  ? layers.find((ly) => ly.id === selectedSecondLayerId)?.name
+                  : "Select second layer"}
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
@@ -296,7 +329,7 @@ export default function PolygonToolDialog({
               <Command>
                 <CommandInput placeholder="Search layer..." />
                 <CommandList>
-                  <CommandEmpty>No layers found.</CommandEmpty>
+                  <CommandEmpty>No layer found.</CommandEmpty>
                   <CommandGroup>
                     {layers.map((ly) => (
                       <CommandItem
@@ -304,15 +337,15 @@ export default function PolygonToolDialog({
                         value={ly.name}
                         onSelect={() => {
                           setSelectedSecondLayerId(ly.id)
-                          setOpenSecond(false)
                           setLayerName(`${ly.name}-${operation.toLowerCase()}`)
                         }}
+                        disabled={ly.id === selectedFirstLayerId}
                       >
                         <Check
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            ly.id === selectedSecondLayerId ? "opacity-100" : "opacity-0"
-                          )}
+                          className={cn("mr-2 h-4 w-4", {
+                            "opacity-100": ly.id === selectedSecondLayerId,
+                            "opacity-0": ly.id !== selectedSecondLayerId,
+                          })}
                         />
                         {ly.name}
                       </CommandItem>
@@ -322,6 +355,32 @@ export default function PolygonToolDialog({
               </Command>
             </PopoverContent>
           </Popover>
+{/* 
+          <Select
+            value={selectedSecondLayerId} 
+            onValueChange={(id) => {
+                setSelectedSecondLayerId(id)
+            }}
+          >
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Select second layer" />
+            </SelectTrigger>
+            <SelectContent>
+              {layers.length === 0
+                  ? <SelectItem value="none" disabled>No layers available</SelectItem>
+                  : layers.map((ly) => (
+                      <SelectItem key={ly.id} value={ly.id} disabled={ly.id === selectedFirstLayerId}>
+                        {ly.name}
+                      </SelectItem>
+                  ))}
+              
+            </SelectContent>
+          </Select> */}
+
+          
+          
+          
+          </div>
         </CardContent>
       </Card>
 

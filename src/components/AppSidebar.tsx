@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"
+import { useState, useEffect } from "react"
 import { Group, Layers, Settings, Wrench } from "lucide-react"
 import {
   Sidebar,

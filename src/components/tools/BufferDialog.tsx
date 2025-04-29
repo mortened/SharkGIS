@@ -3,7 +3,6 @@ import { ToolDialogShell } from "./ToolDialogShell"
 import BufferTool from "./BufferTool"
 import * as turf from "@turf/turf"
 import { useLayers } from "@/hooks/useLayers"
-import { Layer } from "@/hooks/useLayers"
 import { v4 as uuidv4 } from 'uuid'
 
 interface BufferDialogProps {

@@ -3,7 +3,6 @@ import AppSidebar from './components/AppSidebar'
 import './App.css'
 import Map from './components/Map'
 import NewLayerButton from './components/layers/NewLayerButton'
-import ToolBar from './components/tools/ToolBar'
 import TopBar from './components/TopBar'
 
 function App() {

@@ -1,6 +1,5 @@
 import { useState } from "react"
 import { ToolDialogShell } from "./ToolDialogShell"
-import BufferTool from "./BufferTool"
 import * as turf from "@turf/turf"
 import { useLayers } from "@/hooks/useLayers"
 import { FeatureCollection, Polygon, MultiPolygon, Feature } from "geojson"
@@ -31,6 +30,7 @@ export function IntersectDialog({ open, onOpenChange }: IntersectDialogProps) {
   const [selectedSecondLayerId, setSelectedSecondLayerId] = useState("")
   const [layerName, setLayerName] = useState("")
   const { layers, addLayer } = useLayers()
+  
 
   // This is the "save" logic
   function onSave() {

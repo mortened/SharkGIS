@@ -1,4 +1,4 @@
-import { use, useState } from "react"
+import { useState } from "react"
 import { getPublicPath } from "@/lib/utils"
 import { Sidebar } from "./ui/sidebar"
 import { Button } from "./ui/button"
@@ -14,11 +14,9 @@ import { useLayers } from "@/hooks/useLayers"
 export default function TopBar() {
   // Track which tool is open and whether the dialog is visible
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [closeSidebar, setCloseSidebar] = useState(false)
   const [isDisabled, setIsDisabled] = useState(false)
   const [activeGeometry, setActiveGeometry] = useState<string | null>(null)
   const draw = useDrawStore(state => state.draw) 
-  const setDraw = useDrawStore(state => state.setDraw)
   const {setOpen} = useSidebar()
   const {addLayer, layers} = useLayers()
   
@@ -125,7 +123,6 @@ export default function TopBar() {
                     if (!draw) return
                     draw.deleteAll()
                     setActiveGeometry(null)
-                    setCloseSidebar(true)
                     setOpen(false)
                     setIsDisabled(false)
                 }

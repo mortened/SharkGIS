@@ -54,7 +54,8 @@ export function LayerUploadDialog({ open, onOpenChange }: LayerUploadDialogProps
                     id: uuidv4(),
                     visible: true,
                     fillColor: fillColor,
-                    fillOpacity: fillOpacity
+                    fillOpacity: fillOpacity,
+                    geometryType: geoJsonData.features[0].geometry.type as 'Point' | 'LineString' | 'Polygon' | 'MultiPoint' | 'MultiLineString' | 'MultiPolygon'
                 }, fillColor, fillOpacity)
                 
                 onOpenChange(false)
