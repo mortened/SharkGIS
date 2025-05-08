@@ -74,8 +74,8 @@ export function LayerUploadFile({
 
     return (
         <Card 
-            className={`border-2 border-[#ff8847] border-dashed transition-colors duration-200 ${
-                dragActive ? "bg-[#ff8847] border-[#ffffff]" : ""
+            className={`border-2 border-secondary border-dashed transition-colors duration-200 ${
+                dragActive ? "bg-secondary border-[#ffffff]" : ""
             }`}
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
@@ -99,7 +99,7 @@ export function LayerUploadFile({
                 <Button 
                     variant="ghost" 
                     onClick={() => fileInputRef.current?.click()}
-                    className="flex items-center gap-2 bg-[#ff8847] rounded-xl"
+                    className="flex items-center gap-2 bg-secondary rounded-xl"
                 >
                     <Upload className="h-4 w-4" />
                     Choose File

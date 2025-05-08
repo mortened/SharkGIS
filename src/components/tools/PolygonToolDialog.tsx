@@ -6,7 +6,7 @@ import { FeatureCollection, Polygon, MultiPolygon, Feature } from "geojson"
 import { v4 as uuidv4 } from 'uuid'
 import { Card, CardContent } from "../ui/card"
 import { LayerSettingsForm } from "../layers/LayerSettingsForm" // or define locally if you prefer
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select"
+// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select"
 import {
   Popover,
   PopoverTrigger,
@@ -44,15 +44,13 @@ function pairwiseUnion(featureA: Feature<Polygon|MultiPolygon>, featureB: Featur
 interface PolygonToolDialogProps {
   open: boolean
   onOpenChange: (o: boolean) => void
-  operation: "Intersect" | "Union" | "Difference"
-  description?: string
+  operation: "Intersect" | "Union" | "Difference" | "Clip"
 }
 
 export default function PolygonToolDialog({
   open,
   onOpenChange,
   operation,
-  description,
 }: PolygonToolDialogProps) {
   const { layers, addLayer } = useLayers()
 
@@ -69,6 +67,13 @@ export default function PolygonToolDialog({
 
   const selectedFirstLayer = layers.find((ly) => ly.id === selectedFirstLayerId)
   const selectedSecondLayer = layers.find((ly) => ly.id === selectedSecondLayerId)
+
+  const descriptions = {
+    Intersect: "Finds the overlapping area between two or more input layers, returning only the portions where they overlap.",
+    Union: "Combines two or more input layers into a single layer, merging their geometries.",
+    Difference: "Calculates the area of one layer that does not overlap with another layer.",
+    Clip: "Cuts a layer using the boundaries of another layer, returning only the area within the clipping layer.",
+  }
 
   // const firstButtonLabel = selectedFirstLayer ? selectedFirstLayer.name : "Choose first layer"
   // const secondButtonLabel = selectedSecondLayer ? selectedSecondLayer.name : "Choose second layer"
@@ -103,9 +108,10 @@ export default function PolygonToolDialog({
       doIntersect(finalName, finalColor, finalOpacity)
     } else if (operation === "Union") {
       doUnion(finalName, finalColor, finalOpacity)
-    } else {
-      // For difference or other operations, handle them similarly
+    } else if (operation === "Difference"){
       doDifference(finalName, finalColor, finalOpacity)
+    } else if (operation === "Clip") {
+      doClip(finalName, finalColor, finalOpacity)
     }
   }
 
@@ -237,46 +243,59 @@ export default function PolygonToolDialog({
     )
   }
 
+  // Clip operation
+  function doClip(tempName: string, color: string, opacity: number) {
+    if (!selectedFirstLayer || !selectedSecondLayer) return
+    const firstFeatures = selectedFirstLayer.data.features.filter((f) =>
+      f.geometry.type === "Polygon" || f.geometry.type === "MultiPolygon"
+    ) as Feature<Polygon|MultiPolygon>[]
+    const secondFeatures = selectedSecondLayer.data.features.filter((f) =>
+      f.geometry.type === "Polygon" || f.geometry.type === "MultiPolygon"
+    ) as Feature<Polygon|MultiPolygon>[]
+    const clippedResults: Feature<Polygon|MultiPolygon>[] = []
+    for (const featureA of firstFeatures) {
+      for (const featureB of secondFeatures) {
+        if (!bboxesOverlap(featureA, featureB)) continue
+        const fc = turf.featureCollection([featureA, featureB]) as FeatureCollection<Polygon|MultiPolygon>
+        const clipped = turf.intersect(fc)
+        if (clipped) clippedResults.push(clipped)
+      }
+    }
+    if (!clippedResults.length) {
+      console.warn("No overlapping area found.")
+    }
+    addLayer(
+      {
+        id: uuidv4(),
+        name: tempName,
+        data: {
+          type: "FeatureCollection",
+          features: clippedResults,
+        },
+        fillColor: color,
+        fillOpacity: opacity,
+        visible: true,
+        geometryType: "Polygon",
+      },
+      color,
+      opacity
+    )
+  }
+
   return (
     <ToolDialogShell
       open={open}
       onOpenChange={onOpenChange}
       title={operation}
       onSave={onSave}
-      description={description}
+      description={descriptions[operation]}
     >
-      <Card>
-        <CardContent>
-          
-          <div className="flex items-center justify-between">
-
-          {/* <Select
-            value={selectedFirstLayerId}
-            onValueChange={(id) => {
-                setSelectedFirstLayerId(id)
-            }}
-          >
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Select first layer" />
-            </SelectTrigger>
-            <SelectContent>
-              {layers.length === 0
-                ? <SelectItem value="none" disabled>No layers available</SelectItem>
-                : layers.map((ly) => (
-                    <SelectItem key={ly.id} value={ly.id} disabled={ly.id === selectedSecondLayerId}>
-                      {ly.name}
-                    </SelectItem>
-                ))}
-              
-            </SelectContent>
-          </Select> */}
-
-          {/* Popover select */}
-
+      <Card className="border-none bg-transparent shadow-none">
+        <CardContent className="align-center p-0 flex flex-row justify-between  "> 
           
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" role="combobox" className="w-[200px] justify-between">
+              <Button variant="default" role="combobox" className="w-[220px] justify-between shadow-sm">
                 {selectedFirstLayerId
                   ? layers.find((ly) => ly.id === selectedFirstLayerId)?.name
                   : "Select first layer"}
@@ -318,7 +337,7 @@ export default function PolygonToolDialog({
 
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" role="combobox" className="w-[200px] justify-between">
+              <Button variant="default" role="combobox" className="w-[220px] justify-between shadow-sm">
                 {selectedSecondLayerId
                   ? layers.find((ly) => ly.id === selectedSecondLayerId)?.name
                   : "Select second layer"}
@@ -380,7 +399,7 @@ export default function PolygonToolDialog({
           
           
           
-          </div>
+          
         </CardContent>
       </Card>
 

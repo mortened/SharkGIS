@@ -74,7 +74,7 @@ export function LayerUploadDialog({ open, onOpenChange }: LayerUploadDialogProps
     return (
         <AlertDialog open={open} onOpenChange={onOpenChange}>
             <AlertDialogOverlay className="z-[99] bg-black/10" />
-            <AlertDialogContent className="z-[100] bg-[#a5c7db] sm:rounded-2xl border-0">
+            <AlertDialogContent className="z-[100] bg-primary-light sm:rounded-2xl border-0">
                 <AlertDialogHeader>
                     <AlertDialogTitle>Add a new layer</AlertDialogTitle>
                     <AlertDialogDescription>

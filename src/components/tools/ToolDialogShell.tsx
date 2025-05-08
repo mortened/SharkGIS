@@ -17,6 +17,7 @@ import {
     onSave?: () => void
     children: React.ReactNode
     description?: string
+    className?: string
   }
   
   export function ToolDialogShell({
@@ -26,16 +27,23 @@ import {
     onSave,
     children,
     description,
+    className,
   }: ToolDialogShellProps) {
     return (
       <AlertDialog open={open} onOpenChange={onOpenChange}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
+        <AlertDialogContent className="max-h-[90vh] flex flex-col">
+          <AlertDialogHeader className="pb-2">
             <AlertDialogTitle>{title}</AlertDialogTitle>
-            <AlertDialogDescription>{description}</AlertDialogDescription>
+            {description && (
+              <AlertDialogDescription className="text-sm">
+                {description}
+              </AlertDialogDescription>
+            )}
           </AlertDialogHeader>
-          {children}
-          <AlertDialogFooter>
+          <div className="flex-1 min-h-0 overflow-hidden">
+            {children}
+          </div>
+          <AlertDialogFooter className="pt-2 mt-2 border-t">
             <AlertDialogCancel onClick={() => onOpenChange(false)}>
               Close
             </AlertDialogCancel>
