@@ -42,7 +42,7 @@ export function FilterControls() {
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-2">
+      <div className="flex gap-8">
         <Select value={selectedField} onValueChange={setSelectedField}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Select field" />
@@ -77,7 +77,7 @@ export function FilterControls() {
           className="w-[180px]"
         />
 
-        <Button onClick={handleAddFilter}>Add Filter</Button>
+        <Button className="ml-auto" onClick={handleAddFilter}>Add Filter</Button>
       </div>
 
       {/* Display active filters horizontally */}

@@ -134,6 +134,7 @@ export function DataTable<TData>({ data }: DataTableProps<TData>) {
       }
     },
   })
+  
 
   return (
     <div className="h-full flex flex-col">

@@ -35,6 +35,7 @@ export default function FeatureExtractionDialog({
 
     useEffect(() => {
         setTableLayerId(selectedLayerId)
+        setShowTable(true)
     }, [selectedLayerId, setTableLayerId])
 
     return(

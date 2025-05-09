@@ -28,7 +28,7 @@ export function FeatureExtractionDialogShell({
 }: FeatureExtractionDialogShellProps) {
     return (
         <AlertDialog open={open} onOpenChange={onOpenChange}>
-            <AlertDialogContent className="max-w-[1000px] w-[90vw] max-h-[90vh] overflow-hidden">
+            <AlertDialogContent className="max-w-[1000px] w-[70vw] max-h-[90vh] overflow-hidden">
                 <AlertDialogHeader>
                     <AlertDialogTitle>{title}</AlertDialogTitle>
                     <AlertDialogDescription>{description}</AlertDialogDescription>
