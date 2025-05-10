@@ -43,48 +43,40 @@ export default function TopBar() {
 
     
 
-    function saveLayer(draw: FeatureCollection | null): void {
-        if (!draw || draw.features.length === 0) return
-
-        // Check if the features are valid
-        const hasValidFeatures = draw.features.some(feature => {
-            const geometry = feature.geometry
-
-            if (geometry.type === 'Point') {
-                return Array.isArray(geometry.coordinates) && geometry.coordinates.length === 2
-            }
-
-            if (geometry.type === 'LineString') {
-                return Array.isArray(geometry.coordinates) && geometry.coordinates.length >= 2
-            }
-
-            if (geometry.type === 'Polygon') {
-                return Array.isArray(geometry.coordinates) &&
-                    Array.isArray(geometry.coordinates[0]) &&
-                    geometry.coordinates[0].length >= 3
-            }
-
-            return false
-        })
-
-        if (!hasValidFeatures) return
-
-
-        console.log(draw)
-        const geomType = draw.features[0].geometry.type 
-        
-        //Add layer to the store
-        addLayer({
+    function saveLayer(fc: FeatureCollection | null): void {
+        if (!fc || fc.features.length === 0) return
+      
+        /* validate geometries … */
+      
+        const withProps: FeatureCollection = {
+          ...fc,
+          features: fc.features.map((f, i) => ({
+            ...f,
+            properties: {
+              ...(f.properties || {}),
+              DrawID: i + 1,
+              Geometry: f.geometry.type,
+            },
+          })),
+        }
+      
+        const geomType = withProps.features[0].geometry.type as Layer["geometryType"]
+      
+        addLayer(
+          {
             id: `layer-${layers.length + 1}`,
             name: `Layer ${layers.length + 1}`,
-            data: draw,
+            data: withProps,
             fillColor: "#ff0000",
             fillOpacity: 0.5,
             visible: true,
-            geometryType: geomType as 'Point' | 'LineString' | 'Polygon' | 'MultiPoint' | 'MultiLineString' | 'MultiPolygon'
-        }, "#ff0000", 0.5)
-
-    }
+            geometryType: geomType,
+          },
+          "#ff0000",
+          0.5
+        )
+      }
+      
 
   return (
     <>

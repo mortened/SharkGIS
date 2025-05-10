@@ -39,12 +39,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { useAttributeTable } from "@/stores/useAttributeTable"
+
+interface Identifiable {
+  id: string | number
+}
 
 interface DataTableProps<TData> {
   data: TData[]
 }
 
-export function DataTable<TData>({ data }: DataTableProps<TData>) {
+export function DataTable<TData extends Identifiable>({ data }: DataTableProps<TData>) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
@@ -52,6 +57,7 @@ export function DataTable<TData>({ data }: DataTableProps<TData>) {
   const [columnsOpen, setColumnsOpen] = useState(false)
   const [pageSize, setPageSize] = useState(10)
   const [pageIndex, setPageIndex] = useState(0)
+  const setSelectedFeatures = useAttributeTable(state => state.setSelectedFeatures)
 
   // Generate columns dynamically based on the data
   const columns = React.useMemo<ColumnDef<TData>[]>(() => {
@@ -134,6 +140,15 @@ export function DataTable<TData>({ data }: DataTableProps<TData>) {
       }
     },
   })
+
+  /* whenever the user ticks/unticks, sync IDs to Zustand */
+  React.useEffect(() => {
+    const ids = table
+      .getSelectedRowModel()
+      .rows
+      .map(r => r.original.id.toString())   // make sure they’re strings
+    setSelectedFeatures(ids)               // ⟵ update the store
+  }, [rowSelection, setSelectedFeatures, table])
   
 
   return (
