@@ -56,7 +56,7 @@ export function LayerUploadFile({
             onFileSelect(file)
             setErrorMessage(null)
         } else {
-            setErrorMessage("Please upload a JSON or GeoJSON file")
+            setErrorMessage("Please upload a GeoJSON file")
         }
     }
 
@@ -67,7 +67,7 @@ export function LayerUploadFile({
                 onFileSelect(file)
                 setErrorMessage(null)
             } else {
-                setErrorMessage("Please upload a JSON or GeoJSON file")
+                setErrorMessage("Please upload a GeoJSON file")
             }
         }
     }
@@ -85,7 +85,7 @@ export function LayerUploadFile({
             <CardHeader>
                 <CardTitle>File Upload</CardTitle>
                 <CardDescription>
-                    Drag and drop your GeoJSON/JSON file or click to browse
+                    Drag and drop your GeoJSON file or click to browse
                 </CardDescription>
             </CardHeader>
             <CardContent className="min-h-[100px] flex flex-col items-center justify-center gap-4">

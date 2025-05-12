@@ -14,17 +14,37 @@ export const BLANK_STYLE = {
     }]
 } as mapboxgl.Style
 
+export const BASE_STYLES = {
+    streets: "mapbox://styles/mapbox/streets-v12",
+    outdoors: "mapbox://styles/mapbox/outdoors-v12",
+    light: "mapbox://styles/mapbox/light-v11",
+    dark: "mapbox://styles/mapbox/dark-v11",
+    satellite: "mapbox://styles/mapbox/satellite-v9",
+    satelliteStreets: "mapbox://styles/mapbox/satellite-streets-v12",
+    navigationDay: "mapbox://styles/mapbox/navigation-day-v1",
+    navigationNight: "mapbox://styles/mapbox/navigation-night-v1",
+    blueprint: "mapbox://styles/mortened/cmai5mq6e00y601qyh8e5dmrv",
+    Blank: "blank",
+}
+
+type StyleKey = keyof typeof BASE_STYLES
+
+
+
 interface MapState {
     map: Map | null
     isBaseVisible: boolean
     setMap: (map: Map) => void
     toggleBaseVisibility: () => Promise<void>
     updateMapLayers: () => void
+    updateMapStyle: (key: StyleKey) => void
+    currentStyle: StyleKey
 }
 
 export const useMapStore = create<MapState>((set, get) => ({
     map: null,
     isBaseVisible: true,
+    currentStyle: "dark",
     setMap: (map) => set({ map }),
     toggleBaseVisibility: async () => {
         const { map, isBaseVisible } = get()
@@ -42,11 +62,8 @@ export const useMapStore = create<MapState>((set, get) => ({
         console.log('Changing style to:', newVisibility ? 'streets' : 'blank')
 
         // Change style
-        if (newVisibility) {
-            map.setStyle('mapbox://styles/mapbox/dark-v11')
-        } else {
-            map.setStyle(BLANK_STYLE)
-        }
+        const styleToSet = newVisibility ? BASE_STYLES[get().currentStyle] : BLANK_STYLE
+        map.setStyle(styleToSet)
 
         // Wait for style to load and restore layers
         await new Promise<void>((resolve) => {
@@ -144,5 +161,13 @@ export const useMapStore = create<MapState>((set, get) => ({
                 }
             });
         });
-    }
+    },
+    updateMapStyle: (key: StyleKey) => {
+        const { map } = get()
+        if (!map) return
+      
+        const style = key === "Blank" ? BLANK_STYLE : BASE_STYLES[key]
+        map.setStyle(style)
+        set({ currentStyle: key })
+      }
 }))

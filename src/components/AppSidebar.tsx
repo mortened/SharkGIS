@@ -21,6 +21,7 @@ import {
 import LayerList from "./layers/LayerList"
 import ToolList from "./tools/ToolList"
 import { getPublicPath } from "@/lib/utils"
+import SettingsDialog from "./SettingsDialog"
 
 const menuItems = [
   { title: "Layers", icon: Layers },
@@ -34,6 +35,7 @@ export default function AppSidebar() {
 
   const [isLayersExpanded, setIsLayersExpanded] = useState(true)
   const [isToolsExpanded, setIsToolsExpanded] = useState(true)
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
   useEffect(() => {
     if (state !== "expanded") {
@@ -64,13 +66,7 @@ export default function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>
-            <div className="flex items-center gap-2">
-              <Group className="h-4 w-4" />
-              GroupLabel
-            </div>
-          </SidebarGroupLabel>
+    
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => {
@@ -136,11 +132,12 @@ export default function AppSidebar() {
                   // Everything else remains the same
                   return (
                     <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton>
-                        <a className="flex items-center gap-2">
-                          <item.icon className="h-5 w-5" />
-                          <span className="text-lg">{item.title}</span>
-                        </a>
+                      <SidebarMenuButton
+                        onClick={() => setSettingsOpen(true)}     /* ⟵ open dialog */
+                        className="flex items-center gap-2 px-2 py-1 rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                      >
+                        <item.icon className="h-5 w-5" />
+                        <span className="text-lg">Settings</span>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   )
@@ -148,7 +145,7 @@ export default function AppSidebar() {
               })}
             </SidebarMenu>
           </SidebarGroupContent>
-        </SidebarGroup>
+              <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
       </SidebarContent>
     </Sidebar>
   )

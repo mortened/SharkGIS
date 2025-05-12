@@ -9,13 +9,14 @@ import {
     AlertDialogOverlay,
     AlertDialogDescription,
 } from "@/components/ui/alert-dialog"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { LayerUploadFile } from "./LayerUploadFile"
 import { useLayers } from "@/hooks/useLayers"
 import { v4 as uuidv4 } from 'uuid'
 import { LayerSettingsForm } from "./LayerSettingsForm"
 import { toast, Toaster } from "sonner"
 import { BadgeCheck } from "lucide-react"
+import { getUniqueLayerName, getUniqueColor } from "@/lib/utils"
 interface LayerUploadDialogProps {
     open: boolean
     onOpenChange: (open: boolean) => void
@@ -25,9 +26,20 @@ interface LayerUploadDialogProps {
 export function LayerUploadDialog({ open, onOpenChange }: LayerUploadDialogProps) {
     const [layerName, setLayerName] = useState("")
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
-    const [fillColor, setFillColor] = useState("#008888")
+    const [fillColor, setFillColor] = useState(getUniqueColor())
     const [fillOpacity, setFillOpacity] = useState(0.8)
     const { addLayer } = useLayers()
+
+    // Set name of the layer based on the file name if file is selected
+    useEffect(() => {
+        if (selectedFile) {
+            const name = selectedFile.name.split('.').slice(0, -1).join('.')
+            // Check if name is unique
+            const uniqueName = getUniqueLayerName(name)
+            setLayerName(uniqueName)
+        }
+    }, [selectedFile])
+        
 
     function displayToast(title: string, description: string) {
         toast(title, {
@@ -50,7 +62,7 @@ export function LayerUploadDialog({ open, onOpenChange }: LayerUploadDialogProps
                 
                 addLayer({
                     data: geoJsonData,
-                    name: layerName,
+                    name: getUniqueLayerName(layerName),
                     id: uuidv4(),
                     visible: true,
                     fillColor: fillColor,
@@ -61,7 +73,7 @@ export function LayerUploadDialog({ open, onOpenChange }: LayerUploadDialogProps
                 onOpenChange(false)
                 setLayerName("")
                 setSelectedFile(null)
-                setFillColor("#008888")
+                setFillColor(getUniqueColor())
                 setFillOpacity(0.8)
                 displayToast('Layer added successfully', 'The layer has been added to the map.')
             } catch (error) {
@@ -78,7 +90,7 @@ export function LayerUploadDialog({ open, onOpenChange }: LayerUploadDialogProps
                 <AlertDialogHeader>
                     <AlertDialogTitle>Add a new layer</AlertDialogTitle>
                     <AlertDialogDescription>
-                        Upload a GeoJSON/JSON file to add as a new layer
+                        Upload a GeoJSON file to add as a new layer
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <LayerUploadFile

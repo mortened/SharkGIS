@@ -1,7 +1,7 @@
 import { useRef, useEffect } from 'react'
 //import type { Map as MapboxMap } from 'mapbox-gl'
 import mapboxgl from 'mapbox-gl'
-import { useMapStore } from '@/hooks/useMapstore'
+import { useMapStore, BASE_STYLES } from '@/hooks/useMapstore'
 import MapboxDraw from "@mapbox/mapbox-gl-draw";
 import "@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css"
 import { useDrawStore } from '@/hooks/useDrawStore';
@@ -23,6 +23,8 @@ export const BLANK_STYLE = {
     ]
 }
 
+
+
 function Map() { 
     const mapContainer = useRef<HTMLDivElement>(null)
     const drawRef = useRef<MapboxDraw | null>(null)
@@ -30,12 +32,13 @@ function Map() {
     const { setMap } = useMapStore()
     //const map = useRef<MapboxMap | null>(null)
     
+    
     useEffect(() => {
         if (!mapContainer.current) return
 
         const map = new mapboxgl.Map({
             container: mapContainer.current!,
-            style: 'mapbox://styles/mapbox/dark-v11',
+            style: BASE_STYLES.dark,
             center: [10.4, 63.425],
             zoom: 12
         })
