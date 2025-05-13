@@ -26,9 +26,9 @@ export function LayerSettingsForm({
         >
             <CardHeader>
                 <CardTitle>Layer Settings</CardTitle>
-                    <CardDescription>
+                    {/* <CardDescription>
                         Configure the layer settings
-                    </CardDescription>
+                    </CardDescription> */}
             </CardHeader>
                 <CardContent>
                 <div className="flex flex-row w-full justify-between">

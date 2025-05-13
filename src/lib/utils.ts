@@ -31,27 +31,38 @@ export function getUniqueLayerName(name: string) {
   return uniqueName;
 }
 
+
 const PALETTE = [
   "#e6194b", "#3cb44b", "#ffe119", "#4363d8", "#f58231",
   "#911eb4", "#46f0f0", "#f032e6", "#bcf60c", "#fabebe",
 ];
 
-/** Pick a color that isn’t already in use. */
-export function getUniqueColor(): string {
-  const used = new Set(
-    useLayers.getState().layers.map(l => l.fillColor as string)
-  );
+// This function returns a unique color from the palette or generates a random color if all colors are used
+// It takes an optional array of extra used colors to avoid collisions
+export function getUniqueColor(extraUsed: string[] = []): string {
+  const used = new Set([
+    ...useLayers.getState().layers.map(l => l.fillColor as string),
+    ...extraUsed,
+  ]);
 
-  // 1) try palette
-  for (const color of PALETTE) {
-    if (!used.has(color)) return color;
-  }
+  for (const c of PALETTE) if (!used.has(c)) return c;
 
-  // 2) fallback: random hex until we hit one that’s new
-  let random;
+  let rnd: string;
   do {
-    random = "#" + Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, "0");
-  } while (used.has(random));
-
-  return random;
+    rnd = "#" + Math.random().toString(16).slice(2, 8).padStart(6, "0");
+  } while (used.has(rnd));
+  return rnd;
 }
+
+export const iconForGeometry = (geom: string): string => {
+  switch (geom) {
+    case "Point":
+    case "MultiPoint":
+      return "/icons/point.svg";
+    case "LineString":
+    case "MultiLineString":
+      return "/icons/line.svg";
+    default:                       // Polygon, MultiPolygon, etc.
+      return "/icons/polygon.svg";
+  }
+};

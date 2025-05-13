@@ -3,6 +3,15 @@ import { Ellipsis, Eye, EyeClosed, Settings, Trash2 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu";
 import { useState } from "react";
 import { LayerSettingsDialog } from "./LayerSettingsDialog";
+import { getPublicPath } from "@/lib/utils";
+
+
+const iconPath = (geom?: string) => {
+    if (!geom) return "/icons/polygon.svg"; // fallback
+    if (geom.startsWith("Point"))      return "/icons/point.svg";
+    if (geom.includes("Line"))         return "/icons/line.svg";
+    return "/icons/polygon.svg";
+  };
 
 
 interface LayerItemProps{
@@ -20,7 +29,7 @@ export default function LayerItem({
     isVisible: propIsVisible,
     onToggleVisibility
 }: LayerItemProps){
-    const { layers } = useLayers();
+    const { layers, selectedLayerId, setSelectedLayer } = useLayers();
     const layer = layers.find(l => l.id === id);
     const isBaseLayer = id === "base";
     const isVisible = isBaseLayer 
@@ -29,10 +38,29 @@ export default function LayerItem({
     console.log('Layer visibility:', { id, isVisible, layer, data: layer?.data }); // Debug log
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     
+    const isSelected = id === selectedLayerId;
+        
+    const handleSelect = () => {
+        // toggle: click again to un‑select
+        setSelectedLayer(isSelected ? null : id);
+      };
+        
 
     return(
-        <div className="flex items-center justify-between p-4">
+        <div className={`flex items-center justify-between p-4 ${isSelected ? "border-4 border-red-500" : ""}`} >
+            <div className="flex items-center gap-4" onClick={() => {
+            handleSelect();
+        }}>
+            <span
+                className="inline-block h-5 w-5"
+                style={{
+                backgroundColor: layer?.fillColor, // ← tint
+                WebkitMask: `url(${getPublicPath(iconPath(layer?.geometryType))}) center / contain no-repeat`,
+                mask:       `url(${getPublicPath(iconPath(layer?.geometryType))}) center / contain no-repeat`,
+                }}
+            />
             <h3>{name}</h3>
+            </div>
             <div className="flex items-center gap-2 justify-end">
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild className="transition-all duration-900 hover:scale-110">

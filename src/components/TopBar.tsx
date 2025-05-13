@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { getPublicPath } from "@/lib/utils"
+import { getPublicPath, getUniqueColor } from "@/lib/utils"
 import { Sidebar } from "./ui/sidebar"
 import { Button } from "./ui/button"
 import { LayerUploadDialog } from "./layers/LayerUploadDialog"
@@ -67,7 +67,7 @@ export default function TopBar() {
             id: `layer-${layers.length + 1}`,
             name: `Layer ${layers.length + 1}`,
             data: withProps,
-            fillColor: "#ff0000",
+            fillColor: getUniqueColor(),
             fillOpacity: 0.5,
             visible: true,
             geometryType: geomType,

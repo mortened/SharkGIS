@@ -163,11 +163,48 @@ export const useMapStore = create<MapState>((set, get) => ({
         });
     },
     updateMapStyle: (key: StyleKey) => {
-        const { map } = get()
+        const { map, isBaseVisible } = get()
         if (!map) return
-      
-        const style = key === "Blank" ? BLANK_STYLE : BASE_STYLES[key]
-        map.setStyle(style)
-        set({ currentStyle: key })
-      }
+
+        // Remember the choice immediately
+        set({ currentStyle: key });
+
+        // If basemap was hidden, show it
+        if (!isBaseVisible) {
+            set({ isBaseVisible: true });
+        }
+
+        const style = key === "Blank" ? BLANK_STYLE : BASE_STYLES[key];
+        map.setStyle(style);
+    
+        // Wait for style to load and restore layers
+        map.once('style.load', () => {
+            const layers = useLayers.getState().layers
+            layers.forEach(layer => {
+                map.addSource(layer.id, {
+                    type: 'geojson',
+                    data: layer.data
+                });
+    
+                map.addLayer({
+                    id: layer.id,
+                    type: layer.geometryType === 'Point' ? 'circle' : layer.geometryType === 'LineString' ? 'line' : 'fill',
+                    source: layer.id,
+                    paint: {
+                        'fill-color': layer.fillColor,
+                        'fill-opacity': layer.fillOpacity,
+                        'circle-color': layer.fillColor,
+                        'circle-opacity': layer.fillOpacity,
+                        'line-color': layer.fillColor,
+                        'line-opacity': layer.fillOpacity,
+                    },
+                    layout: {
+                        visibility: layer.visible ? 'visible' : 'none'
+                    }
+                });
+            });
+        
+        })
+    
+    }
 }))

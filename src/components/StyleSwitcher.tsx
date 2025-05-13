@@ -24,7 +24,8 @@ export default function StyleSwitcher() {
         label !== "Blank" ? (
           <div
             key={label}
-            onClick={() => updateStyle(label as keyof typeof BASE_STYLES)}
+            onClick={() => 
+              updateStyle(label as keyof typeof BASE_STYLES)}
             className={`
               relative aspect-square w-full overflow-hidden rounded-2xl border-4
               cursor-pointer transition-transform duration-200 ease-in-out

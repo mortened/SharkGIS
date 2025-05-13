@@ -21,6 +21,9 @@ interface LayerState {
     updateLayer: (id: string, layer: Layer) => void
     toggleLayer: (id: string) => void
     reorderLayers: (fromIndex: number, toIndex: number) => void
+
+    selectedLayerId: string | null;          // ① NEW
+    setSelectedLayer: (id: string | null) => void; // ② NEW
 }
 
 
@@ -29,6 +32,63 @@ export const useLayers = create<LayerState>((set, get) => ({
     // map: null,
     // setMap: (map) => set({ map }),
     
+    selectedLayerId: null,
+
+    setSelectedLayer: (id) => {              // ②
+        const map = useMapStore.getState().map;
+        const { selectedLayerId, layers } = get();
+    
+        /* ---  remove previous highlight  --- */
+        if (map && selectedLayerId && map.getLayer(`${selectedLayerId}-highlight`)) {
+          map.removeLayer(`${selectedLayerId}-highlight`);
+          map.removeSource(`${selectedLayerId}-highlight`);
+        }
+    
+        /* ---  add new highlight (unless un‑selecting)  --- */
+        if (map && id) {
+          const base = layers.find((l) => l.id === id);
+          if (base) {
+            map.addSource(`${id}-highlight`, { type: "geojson", data: base.data });
+    
+            if (base.geometryType.includes("Point")) {
+              map.addLayer({
+                id: `${id}-highlight`,
+                type: "circle",
+                source: `${id}-highlight`,
+                paint: {
+                  "circle-radius": 8,
+                  "circle-stroke-color": "#ff0000",
+                  "circle-stroke-width": 4,
+                  "circle-color": "rgba(0,0,0,0)",
+                },
+              });
+            } else if (base.geometryType.includes("Line")) {
+              map.addLayer({
+                id: `${id}-highlight`,
+                type: "line",
+                source: `${id}-highlight`,
+                paint: {
+                  "line-color": "#ff0000",
+                  "line-width": 6,
+                },
+              });
+            } else {
+              map.addLayer({
+                id: `${id}-highlight`,
+                type: "line",
+                source: `${id}-highlight`,
+                paint: {
+                  "line-color": "#ff0000",
+                  "line-width": 4,
+                },
+              });
+            }
+          }
+        }
+    
+        /* finally update store */
+        set({ selectedLayerId: id });
+      },
 
     addLayer: (layer) => {
         // const map = get().map;

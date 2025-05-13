@@ -53,16 +53,6 @@ export default function LayerList() {
 
   return (
     <div className="gap-2 p-3">
-      {/* Base map item at the top */}
-      <div className="text-sm italic text-gray-500">
-      <LayerItem
-        id="base"
-        name="Base map"
-        onDelete={() => {}}
-        isVisible={isBaseVisible}
-        onToggleVisibility={handleBaseToggle}
-      />
-    </div>   
 
       {reversedLayers.map((layer, reversedIndex) => {
         // Convert the reversed index to the actual store index
@@ -93,6 +83,18 @@ export default function LayerList() {
           </div>
         );
       })}
+
+      {/* Base map item at the bottom */}
+      <div className="text-sm italic text-gray-500">
+      
+      <LayerItem
+        id="base"
+        name="Base map"
+        onDelete={() => {}}
+        isVisible={isBaseVisible}
+        onToggleVisibility={handleBaseToggle}
+      />
+    </div>   
     </div>
   );
 }
