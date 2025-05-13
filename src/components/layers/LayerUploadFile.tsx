@@ -14,23 +14,11 @@ import { useState, useRef } from "react"
 interface LayerUploadFileProps {
     selectedFile: File | null
     onFileSelect: (file: File) => void
-    // layerName: string
-    // onNameChange: (name: string) => void
-    // fillColor: string
-    // onFillColorChange: (color: string) => void
-    // fillOpacity: number
-    // onFillOpacityChange: (opacity: number) => void
 }
 
 export function LayerUploadFile({ 
     selectedFile, 
     onFileSelect, 
-    // layerName, 
-    // onNameChange,
-    // fillColor,
-    // onFillColorChange,
-    // fillOpacity,
-    // onFillOpacityChange
 }: LayerUploadFileProps) {
     const [dragActive, setDragActive] = useState(false)
     const fileInputRef = useRef<HTMLInputElement>(null)
@@ -112,71 +100,6 @@ export function LayerUploadFile({
                 {errorMessage && (
                     <p className="mt-1 text-red-500 text-sm">{errorMessage}</p>
                 )}
-        
-        {/* <div className="flex flex-row justify-between w-full">
-            <div className="flex flex-col">
-                <label
-                    htmlFor="layerName"
-                    className="mb-1 text-sm font-medium text-gray-700"
-                    >
-                    Layer Name
-            </label>
-            <Input
-                id="layerName"
-                type="text"
-                placeholder="Enter layer name"
-                value={layerName}
-                onChange={(e) => onNameChange(e.target.value)}
-                className="hover:border-gray-300"
-            />
-            {errorMessage && (
-                <p className="mt-1 text-red-500 text-sm">{errorMessage}</p>
-            )}
-            </div>
-            
-
-
-            <div className="flex flex-col">
-            <label
-                htmlFor="fillColor"
-                className="mb-1 text-sm font-medium text-gray-700"
-            >
-            Fill Color
-            </label>
-            <div className="flex items-center gap-2">
-            <Input
-                type="text"
-                value={fillColor}
-                onChange={(e) => onFillColorChange(e.target.value)}
-                className="max-w-[6rem] hover:border-gray-300"
-            />
-            <input
-                id="fillColor"
-                type="color"
-                value={fillColor}
-                onChange={(e) => onFillColorChange(e.target.value)}
-                className="h-8 w-8 rounded border cursor-pointer border-gray-300 hover:scale-110 transition-all duration-200"
-            />
-            </div>
-        </div>
-
-        </div>
-        <div className="flex w-full flex-col">
-            <label
-                htmlFor="fillOpacity"
-                className="mb-1 text-sm font-medium text-gray-700"  
-            >
-                Opacity: {fillOpacity * 100}%
-            </label>
-            <Slider
-                value={[fillOpacity * 100]}
-                onValueChange={(value) => onFillOpacityChange(value[0] / 100)}
-                min={0}
-                max={100}
-                step={1}
-                className="w-full"
-            />
-        </div> */}
             </CardContent>
         </Card>
     )

@@ -29,6 +29,43 @@ export const BASE_STYLES = {
 
 type StyleKey = keyof typeof BASE_STYLES
 
+function getLayerTypeAndPaint(layer: {
+    geometryType: string;
+    fillColor: string;
+    fillOpacity: number;
+  }): {
+    layerType: 'fill' | 'line' | 'circle';
+    paint: mapboxgl.AnyPaint;
+  } {
+    let layerType: 'fill' | 'line' | 'circle' = 'fill';
+  
+    if (layer.geometryType === 'Point' || layer.geometryType === 'MultiPoint') {
+      layerType = 'circle';
+    } else if (layer.geometryType === 'LineString' || layer.geometryType === 'MultiLineString') {
+      layerType = 'line';
+    }
+  
+    const paint: mapboxgl.AnyPaint = layerType === 'fill'
+      ? {
+          'fill-color': layer.fillColor,
+          'fill-opacity': layer.fillOpacity,
+        }
+      : layerType === 'line'
+      ? {
+          'line-color': layer.fillColor,
+          'line-opacity': layer.fillOpacity,
+          'line-width': 2,
+        }
+      : {
+          'circle-color': layer.fillColor,
+          'circle-opacity': layer.fillOpacity,
+          'circle-radius': 5,
+        };
+  
+    return { layerType, paint };
+  }
+  
+
 
 
 interface MapState {
@@ -126,42 +163,62 @@ export const useMapStore = create<MapState>((set, get) => ({
     updateMapLayers: () => {
         const { map } = get();
         const layers = useLayers.getState().layers;
-
+      
         if (!map) return;
-
-        // Remove all layers
+      
+        // Remove all existing layers and sources
         layers.forEach(layer => {
-            if (map.getLayer(layer.id)) {
-                map.removeLayer(layer.id);
-                map.removeSource(layer.id);
+          if (map.getLayer(layer.id)) {
+            map.removeLayer(layer.id);
+          }
+          if (map.getSource(layer.id)) {
+            map.removeSource(layer.id);
+          }
+        });
+      
+        // Re-add layers in new order with correct paint properties
+        layers.forEach(layer => {
+          map.addSource(layer.id, {
+            type: 'geojson',
+            data: layer.data
+          });
+      
+          let layerType: 'fill' | 'line' | 'circle' = 'fill';
+          if (layer.geometryType === 'Point' || layer.geometryType === 'MultiPoint') {
+            layerType = 'circle';
+          } else if (layer.geometryType === 'LineString' || layer.geometryType === 'MultiLineString') {
+            layerType = 'line';
+          }
+      
+          const paint: mapboxgl.AnyPaint = layerType === 'fill'
+            ? {
+                'fill-color': layer.fillColor,
+                'fill-opacity': layer.fillOpacity,
+              }
+            : layerType === 'line'
+            ? {
+                'line-color': layer.fillColor,
+                'line-opacity': layer.fillOpacity,
+                'line-width': 2,
+              }
+            : {
+                'circle-color': layer.fillColor,
+                'circle-opacity': layer.fillOpacity,
+                'circle-radius': 5,
+              };
+      
+          map.addLayer({
+            id: layer.id,
+            type: layerType,
+            source: layer.id,
+            paint,
+            layout: {
+              visibility: layer.visible ? 'visible' : 'none'
             }
+          });
         });
-
-        // Re-add layers in the new order
-        layers.forEach(layer => {
-            map.addSource(layer.id, {
-                type: 'geojson',
-                data: layer.data
-            });
-
-            map.addLayer({
-                id: layer.id,
-                type: layer.geometryType === 'Point' ? 'circle' : layer.geometryType === 'LineString' ? 'line' : 'fill',
-                source: layer.id,
-                paint: {
-                    'fill-color': layer.fillColor,
-                    'fill-opacity': layer.fillOpacity,
-                    'circle-color': layer.fillColor,
-                    'circle-opacity': layer.fillOpacity,
-                    'line-color': layer.fillColor,
-                    'line-opacity': layer.fillOpacity,
-                },
-                layout: {
-                    visibility: layer.visible ? 'visible' : 'none'
-                }
-            });
-        });
-    },
+      },
+      
     updateMapStyle: (key: StyleKey) => {
         const { map, isBaseVisible } = get()
         if (!map) return
@@ -186,25 +243,17 @@ export const useMapStore = create<MapState>((set, get) => ({
                     data: layer.data
                 });
     
+                const { layerType, paint } = getLayerTypeAndPaint(layer);
                 map.addLayer({
-                    id: layer.id,
-                    type: layer.geometryType === 'Point' ? 'circle' : layer.geometryType === 'LineString' ? 'line' : 'fill',
-                    source: layer.id,
-                    paint: {
-                        'fill-color': layer.fillColor,
-                        'fill-opacity': layer.fillOpacity,
-                        'circle-color': layer.fillColor,
-                        'circle-opacity': layer.fillOpacity,
-                        'line-color': layer.fillColor,
-                        'line-opacity': layer.fillOpacity,
-                    },
-                    layout: {
-                        visibility: layer.visible ? 'visible' : 'none'
-                    }
+                id: layer.id,
+                type: layerType,
+                source: layer.id,
+                paint,
+                layout: {
+                    visibility: layer.visible ? 'visible' : 'none'
+                }
                 });
             });
-        
         })
-    
     }
 }))

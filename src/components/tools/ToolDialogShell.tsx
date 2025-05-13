@@ -9,6 +9,7 @@ import {
     AlertDialogAction,
     AlertDialogCancel,
   } from "../ui/alert-dialog"
+import { Button } from "../ui/button"
   
   interface ToolDialogShellProps {
     open: boolean
@@ -47,10 +48,15 @@ import {
             <AlertDialogCancel onClick={() => onOpenChange(false)}>
               Close
             </AlertDialogCancel>
-            {onSave && (
+            {/* {onSave && (
               <AlertDialogAction onClick={onSave}>
                 Save
               </AlertDialogAction>
+            )} */}
+            {onSave && (
+              <Button variant="default" onClick={onSave}>
+                Save
+              </Button>
             )}
           </AlertDialogFooter>
         </AlertDialogContent>

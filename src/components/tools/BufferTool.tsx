@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/command"
 import { Input } from "../ui/input"
 import { Check, ChevronsUpDown } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn, getUniqueLayerName } from "@/lib/utils"
 import { useLayers } from "@/hooks/useLayers"
 
 
@@ -22,6 +22,10 @@ interface BufferToolProps {
   setBufferDistance: (distance: number) => void;
   layerName: string;
   setLayerName: (name: string) => void;
+  errors: {
+    layer: boolean;
+    distance: boolean;
+  }
 }
 
 export default function BufferTool({
@@ -29,8 +33,8 @@ export default function BufferTool({
   setSelectedLayerId,
   bufferDistance,
   setBufferDistance,
-  layerName,
   setLayerName,
+  errors,
 }: BufferToolProps) {
   const { layers } = useLayers()
   const [open, setOpen] = useState(false)
@@ -40,10 +44,11 @@ export default function BufferTool({
   
 
   return (
-    <div className="space-y-4">
+    <>
+    <div className="mt-2 mb-4 ml-1 mr-1 flex flex-row justify-between items-center">
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <Button variant="default" role="combobox" aria-expanded={open} className="w-[200px] justify-between">
+          <Button variant="default" role="combobox" aria-expanded={open} className={cn("w-[200px] justify-between", errors.layer && "border-red-500 border-2")}>
             {buttonLabel}
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
@@ -61,7 +66,7 @@ export default function BufferTool({
                     value={layer.name}
                     onSelect={() => {
                       setSelectedLayerId(layer.id)
-                      setLayerName(layer.name + "-buffer")
+                      setLayerName(getUniqueLayerName(layer.name + "-buffer"))
                       setOpen(false)
                     }}
                   >
@@ -82,17 +87,27 @@ export default function BufferTool({
 
       <Input
         type="number"
-        placeholder="Enter buffer distance"
+        placeholder="Enter buffer distance [m]"
         value={bufferDistance ?? ""}
         onChange={(e) => setBufferDistance(Number(e.target.value))}
+        className={cn("w-[210px]", errors.distance && "border-red-500 border-2")}
+        min={0}
+        step={1}
       />
 
-      <Input
-        type="text"
-        placeholder="Enter buffer layer name"
-        value={layerName}
-        onChange={(e) => setLayerName(e.target.value)}
-      />
     </div>
+
+    <div className="text-red-500 text-sm m-auto text-center pb-2">
+      {errors.layer && errors.distance ? (
+        <p>Please select a layer and enter a buffer distance.</p>
+      ) : errors.layer ? (
+        <p>Please select a layer.</p>
+      ) : errors.distance ? (
+        <p>Please enter a buffer distance.</p>
+      ) : null}
+    </div>
+    </>
+
   )
+  
 }

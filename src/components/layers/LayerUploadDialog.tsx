@@ -30,7 +30,7 @@ export function LayerUploadDialog({ open, onOpenChange }: LayerUploadDialogProps
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
     const [selectedFiles, setSelectedFiles] = useState<File[]>([])
     const [fillColor, setFillColor] = useState(getUniqueColor())
-    const [fillOpacity, setFillOpacity] = useState(0.8)
+    const [fillOpacity, setFillOpacity] = useState(1)
     const { addLayer } = useLayers()
     const [pending, setPending] = useState<TempLayer[]>([]);
 
@@ -62,7 +62,7 @@ export function LayerUploadDialog({ open, onOpenChange }: LayerUploadDialogProps
         setLayerName("")
         setSelectedFile(null)
         setFillColor(getUniqueColor())
-        setFillOpacity(0.8)
+        setFillOpacity(1)
         setPending([])
     }
 
@@ -108,7 +108,7 @@ export function LayerUploadDialog({ open, onOpenChange }: LayerUploadDialogProps
             file,
             name: getUniqueLayerName(file.name.replace(/\.geojson$/i, "")),
             color,
-            opacity: 0.8,
+            opacity: 1,
           };
         });
       

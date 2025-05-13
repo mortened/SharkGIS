@@ -9,6 +9,8 @@ import { useSidebar } from "./ui/sidebar"
 import { X, RotateCcw } from "lucide-react"
 import { FeatureCollection } from "geojson"
 import { useLayers } from "@/hooks/useLayers"
+import { Tooltip, TooltipProvider, TooltipTrigger } from "./ui/tooltip"
+import { TooltipContent } from "@radix-ui/react-tooltip"
 
 
 export default function TopBar() {
@@ -85,11 +87,20 @@ export default function TopBar() {
         
         <div className="flex flex-row justify-center">
 
-            <Button variant="ghost" size="default" onClick={() => setIsDialogOpen(true)} className="flex flex-row items-center" disabled={isDisabled}>
-                <Plus className="h-8 w-8" />
-                <span className="text-xs">Upload</span>
-
+            <TooltipProvider>
+                <Tooltip>
+                <TooltipTrigger>
+                    <Button variant="ghost" size="default" onClick={() => setIsDialogOpen(true)} className="flex flex-row items-center" disabled={isDisabled}>
+                    <Plus className="h-8 w-8" />
+                    <span className="text-xs">Upload</span>
             </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>Upload GeoJSN file(s) as layer(s) to the map</p>
+                </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
+            
             <LayerUploadDialog 
                             open={isDialogOpen} 
                             onOpenChange={setIsDialogOpen}
