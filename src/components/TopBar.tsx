@@ -8,9 +8,8 @@ import { useDrawStore } from "@/hooks/useDrawStore"
 import { useSidebar } from "./ui/sidebar"
 import { X, RotateCcw } from "lucide-react"
 import { FeatureCollection } from "geojson"
-import { useLayers } from "@/hooks/useLayers"
-import { Tooltip, TooltipProvider, TooltipTrigger } from "./ui/tooltip"
-import { TooltipContent } from "@radix-ui/react-tooltip"
+import { Layer, useLayers } from "@/hooks/useLayers"
+import { NiceTooltip } from "./tools/NiceToolTip"
 
 
 export default function TopBar() {
@@ -70,12 +69,12 @@ export default function TopBar() {
             name: `Layer ${layers.length + 1}`,
             data: withProps,
             fillColor: getUniqueColor(),
-            fillOpacity: 0.5,
+            fillOpacity: 1,
             visible: true,
             geometryType: geomType,
           },
-          "#ff0000",
-          0.5
+          getUniqueColor(),
+          1
         )
       }
       
@@ -86,35 +85,33 @@ export default function TopBar() {
         
         
         <div className="flex flex-row justify-center">
+            <NiceTooltip label="Upload GeoJSON layer(s) to the map" side="top">
+            <Button variant="ghost" size="default" onClick={() => setIsDialogOpen(true)} className="flex flex-row items-center" disabled={isDisabled}>
+                <Plus className="h-8 w-8" />
+                <span className="text-xs">Upload</span>
 
-            <TooltipProvider>
-                <Tooltip>
-                <TooltipTrigger>
-                    <Button variant="ghost" size="default" onClick={() => setIsDialogOpen(true)} className="flex flex-row items-center" disabled={isDisabled}>
-                    <Plus className="h-8 w-8" />
-                    <span className="text-xs">Upload</span>
             </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                    <p>Upload GeoJSN file(s) as layer(s) to the map</p>
-                </TooltipContent>
-                </Tooltip>
-            </TooltipProvider>
-            
+            </NiceTooltip>
             <LayerUploadDialog 
                             open={isDialogOpen} 
                             onOpenChange={setIsDialogOpen}
                         />
             
-                <Button variant="ghost" size="sm" className=" h-100" onClick={() => drawLayer("point")} disabled={isDisabled}>
-                <img src={getPublicPath(`/icons/point.svg`)} className="h-6 w-6"/>
-                </Button>
-                <Button variant="ghost" size="sm" className=" h-100" onClick={() => drawLayer("line")} disabled={isDisabled}>
-                <img src={getPublicPath(`/icons/line.svg`)} className="h-6 w-6"/> 
-                </Button>
-                <Button variant="ghost" size="sm" className=" h-100" onClick={() => drawLayer("polygon")} disabled={isDisabled}>
-                <img src={getPublicPath(`/icons/polygon.svg`)} className="h-6 w-6"/>
-                </Button>
+                <NiceTooltip label="Draw a new point layer on the map" side="top">
+                    <Button variant="ghost" size="sm" className=" h-100" onClick={() => drawLayer("point")} disabled={isDisabled}>
+                    <img src={getPublicPath(`/icons/point.svg`)} className="h-6 w-6"/>
+                    </Button>
+                </NiceTooltip>
+                <NiceTooltip label="Draw a new line layer on the map" side="top">
+                    <Button variant="ghost" size="sm" className=" h-100" onClick={() => drawLayer("line")} disabled={isDisabled}>
+                    <img src={getPublicPath(`/icons/line.svg`)} className="h-6 w-6"/> 
+                    </Button>
+                </NiceTooltip>
+                <NiceTooltip label="Draw a new polygon layer on the map" side="top">
+                    <Button variant="ghost" size="sm" className=" h-100" onClick={() => drawLayer("polygon")} disabled={isDisabled}>
+                    <img src={getPublicPath(`/icons/polygon.svg`)} className="h-6 w-6"/>
+                    </Button>
+                </NiceTooltip>
 
             </div>
     </Sidebar>
@@ -122,41 +119,50 @@ export default function TopBar() {
     {isDisabled && (
         <Sidebar side="bottom" className="bg-white/90">
             <div className="flex flex-row justify-center">
-                <Button variant="ghost" size="default" onClick={() => {
-                    if (!draw) return
-                    draw.deleteAll()
-                    setActiveGeometry(null)
-                    setOpen(false)
-                    setIsDisabled(false)
-                }
+                <NiceTooltip label="Cancel drawing and delete all drawn features" side="top">
+                    <Button variant="ghost" size="default" onClick={() => {
+                        if (!draw) return
+                        draw.changeMode("simple_select")
+                        draw.deleteAll()
+                        setActiveGeometry(null)
+                        setOpen(false)
+                        setIsDisabled(false)
+                    }
 
-                }>
-                    <X className="h-8 w-8" />
-                    <span className="text-base">Cancel</span>
-                </Button>
-                <Button variant="ghost" size="default" onClick={() => {
-                    if (!draw) return
-                    draw.deleteAll()
-                    drawLayer(activeGeometry!)
-                }}>
-                    <RotateCcw className="h-8 w-8" />
-                    <span className="text-base">Clear all</span>
-                </Button>
-                <Button variant="ghost" size="default" onClick={() => {
-                    drawLayer(activeGeometry!)
-                }
-                }>
-                    <Plus className="h-8 w-8" />
-                    <span className="text-base">Add another</span>
-                </Button>
-                <Button variant="ghost" size="default" onClick={() => {
-                    setIsDisabled(false)
-                    saveLayer(draw?.getAll() ?? null)
-                    draw?.deleteAll()
-                }}>
-                    <Check className="h-8 w-8" />
-                    <span className="text-base">Finish</span>
-                </Button>
+                    }>
+                        <X className="h-8 w-8" />
+                        <span className="text-base">Cancel</span>
+                    </Button>
+                </NiceTooltip>
+                <NiceTooltip label="Delete all drawn features" side="top">
+                    <Button variant="ghost" size="default" onClick={() => {
+                        if (!draw) return
+                        draw.deleteAll()
+                        drawLayer(activeGeometry!)
+                    }}>
+                        <RotateCcw className="h-8 w-8" />
+                        <span className="text-base">Clear all</span>
+                    </Button>
+                </NiceTooltip>
+                <NiceTooltip label="Add another drawn feature" side="top">
+                    <Button variant="ghost" size="default" onClick={() => {
+                        drawLayer(activeGeometry!)
+                    }
+                    }>
+                        <Plus className="h-8 w-8" />
+                        <span className="text-base">Add another</span>
+                    </Button>
+                </NiceTooltip>
+                <NiceTooltip label="Finish drawing and save the layer" side="top">
+                    <Button variant="ghost" size="default" onClick={() => {
+                        setIsDisabled(false)
+                        saveLayer(draw?.getAll() ?? null)
+                        draw?.deleteAll()
+                    }}>
+                        <Check className="h-8 w-8" />
+                        <span className="text-base">Finish</span>
+                    </Button>
+                </NiceTooltip>
             </div>
         </Sidebar>
     )}
