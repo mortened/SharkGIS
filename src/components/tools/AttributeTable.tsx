@@ -2,6 +2,7 @@
 import { useLayers } from "@/hooks/useLayers"
 import { useAttributeTable } from "@/stores/useAttributeTable"
 import { DataTable } from "./DataTable"
+import { featureKey } from "@/lib/utils"
 
 
 
@@ -19,8 +20,10 @@ export function AttributeTable() {
     )
   }
 
+
+  const features = selectedLayer.data.features; 
   // Apply filters to the data
-  const filteredData = selectedLayer.data.features
+  const filteredData = features
     .filter(feature => {
       return filterConditions.every(condition => {
         const value = feature.properties?.[condition.field]
@@ -45,9 +48,9 @@ export function AttributeTable() {
       })
     })
     .map(feature => ({
-      id: feature.id || feature.properties?.id || Math.random().toString(),
-      ...feature.properties
-    }))
+     id: featureKey(feature, features.indexOf(feature)), 
+     ...feature.properties,
+  }));
 
   return (
     <div className="h-full flex flex-col min-h-0">

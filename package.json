@@ -28,7 +28,7 @@
     "@radix-ui/react-tooltip": "^1.2.6",
     "@tanstack/react-table": "^8.21.3",
     "@turf/buffer": "^7.2.0",
-    "@turf/turf": "^7.2.0",
+    "@turf/turf": "^6.5.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",

@@ -5,6 +5,10 @@ import PolygonToolDialog from "./PolygonToolDialog"
 import { BufferDialog } from "./BufferDialog"
 import DissolveDialog from "./DissolveDialog"
 import { FeatureExtractionDialog } from "./FeatureExtractionDialog"
+import { UnionDialog } from "./UnionDialog"
+import { IntersectDialog } from "./IntersectDialog"
+import { DifferenceDialog } from "./DifferenceDialog"
+import { ClipDialog } from "./ClipDialog"
 
 const tools = [
     { name: "Buffer", icon: "buffer" },
@@ -52,24 +56,21 @@ export default function ToolList() {
                 />
             )}
             {activeTool === "Intersect" && (
-                <PolygonToolDialog
+                <IntersectDialog
                     open={isDialogOpen}
                     onOpenChange={setIsDialogOpen}
-                    operation="Intersect"
                 />
             )}
             {activeTool === "Union" && (
-                <PolygonToolDialog
+                <UnionDialog
                     open={isDialogOpen}
                     onOpenChange={setIsDialogOpen}
-                    operation="Union"
                 />
             )}
             {activeTool === "Difference" && (
-                <PolygonToolDialog
+                <DifferenceDialog
                     open={isDialogOpen}
                     onOpenChange={setIsDialogOpen}
-                    operation="Difference"
                 />
             )}
 
@@ -81,10 +82,9 @@ export default function ToolList() {
                 )}
                 
             {activeTool === "Clip" && (
-                <PolygonToolDialog
+                <ClipDialog
                     open={isDialogOpen}
                     onOpenChange={setIsDialogOpen}
-                    operation="Clip"
                 />
             )}
 

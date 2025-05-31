@@ -2,8 +2,9 @@ import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
 import AppSidebar from './components/AppSidebar'
 import './App.css'
 import Map from './components/Map'
-import NewLayerButton from './components/layers/NewLayerButton'
 import TopBar from './components/TopBar'
+import TutorialButtons from './components/TutorialButtons'
+import TutorialBubble from './components/TutorialBubble'
 
 function App() {
   return (
@@ -12,8 +13,7 @@ function App() {
           <AppSidebar />
           <SidebarTrigger className="relative z-50 hover:bg-white/90" />
           <Map />
-          <NewLayerButton />
-          {/* <ToolBar /> */}
+          <TutorialButtons />
           <TopBar />
       </SidebarProvider>
     </div>

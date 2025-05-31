@@ -49,6 +49,16 @@ interface DataTableProps<TData> {
   data: TData[]
 }
 
+// Helper function to show values in a readable format, e.g. for objects
+function show(value: unknown): string {
+  if (Array.isArray(value))          // e.g. [{navn:"…", …}]
+    return value.map(show).join(", ");
+  if (value && typeof value === "object")
+    return JSON.stringify(value);   // any other object
+  return value === undefined || value === null ? "" : String(value);
+}
+
+
 export function DataTable<TData extends Identifiable>({ data }: DataTableProps<TData>) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
@@ -61,51 +71,56 @@ export function DataTable<TData extends Identifiable>({ data }: DataTableProps<T
 
   // Generate columns dynamically based on the data
   const columns = React.useMemo<ColumnDef<TData>[]>(() => {
-    if (!data.length) return []
+  if (!data.length) return [];
 
-    // Get all unique property keys from the data
-    const propertyKeys = Object.keys(data[0]).filter(key => key !== 'id')
+  // include *all* keys that exist in the first row except "id"
+  const propertyKeys = Object.keys(data[0]).filter(k => k !== "id");
+
+  return [
     
-    return [
-      {
-        id: "select",
-        header: ({ table }) => (
-          <Checkbox
-            checked={
-              table.getIsAllRowsSelected() ||
-              (table.getIsSomeRowsSelected() && "indeterminate")
-            }
-            onCheckedChange={(value) => table.toggleAllRowsSelected(!!value)}
-            aria-label="Select all"
-          />
-        ),
-        cell: ({ row }) => (
-          <Checkbox
-            checked={row.getIsSelected()}
-            onCheckedChange={(value) => row.toggleSelected(!!value)}
-            aria-label="Select row"
-          />
-        ),
-        enableSorting: false,
-        enableHiding: false,
-      },
-      ...propertyKeys.map(key => ({
-        accessorKey: key,
-        header: ({ column }) => {
-          return (
-            <Button
-              variant="ghost"
-              onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            >
-              {key}
-              <ArrowUpDown className="ml-2 h-4 w-4" />
-            </Button>
-          )
-        },
-        cell: ({ row }) => <div>{row.getValue(key)}</div>,
-      }))
-    ]
-  }, [data])
+    {
+      id: "select",
+      header: ({ table }) => (
+        <Checkbox
+          checked={
+            table.getIsAllRowsSelected() ||
+            (table.getIsSomeRowsSelected() && "indeterminate")
+          }
+          onCheckedChange={v => table.toggleAllRowsSelected(!!v)}
+          aria-label="Select all"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={v => row.toggleSelected(!!v)}
+          aria-label="Select row"
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
+
+    /* ---- (2) one column per property ---- */
+    ...propertyKeys.map((key) => ({
+      id: key,                                // <- explicit ID
+      accessorFn: (row: any) => row[key],     // <- **NO accessorKey**
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          onClick={() =>
+            column.toggleSorting(column.getIsSorted() === "asc")
+          }
+        >
+          {key}
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      ),
+      cell: ({ getValue }) => <div>{show(getValue())}</div>,
+    })),
+  ];
+}, [data]);
+
 
   const table = useReactTable({
     data,

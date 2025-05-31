@@ -4,6 +4,7 @@ import FeatureExtractionTool from "./FeatureExtractionTool"
 import { useAttributeTable } from "@/stores/useAttributeTable"
 import { useLayers } from "@/hooks/useLayers"
 import type { FeatureCollection } from "geojson"
+import { featureKey, getUniqueColor, getUniqueLayerName } from "@/lib/utils"
 
 interface FeatureExtractionDialogProps {
   open: boolean
@@ -20,10 +21,8 @@ export function FeatureExtractionDialog({ open, onOpenChange }: FeatureExtractio
         if (!selectedLayer) return
 
         // Filter the selected features
-        const selectedFeaturesData = selectedLayer.data.features.filter(feature => 
-            selectedFeatures.includes(feature.id?.toString() || feature.properties?.id?.toString() || "")
-        )
-
+        const feats = selectedLayer.data.features
+        const selectedFeaturesData = feats.filter((f, idx) => selectedFeatures.includes(featureKey(f, idx)));
         // Check if there are any selected features
         if (selectedFeaturesData.length === 0) {
             console.log("No features selected")
@@ -33,27 +32,27 @@ export function FeatureExtractionDialog({ open, onOpenChange }: FeatureExtractio
         // Create a new FeatureCollection with only the selected features
         const selectedFeaturesCollection: FeatureCollection = {
             type: "FeatureCollection",
-            features: selectedLayer.data.features.filter(feature => 
-                selectedFeatures.includes(feature.id?.toString() || feature.properties?.id?.toString() || "")
-            )
+            features: selectedFeaturesData,
         }
 
         // Generate a unique ID for the new layer
         const newLayerId = `extracted_${selectedLayerId}_${Date.now()}`
         
         // Create a new layer name based on the original layer
-        const newLayerName = `${selectedLayer.name} (Extracted)`
+        const newLayerName = getUniqueLayerName(
+            `${selectedLayer.name}-extracted`
+        )
 
         // Add the new layer with a different color
         addLayer({
             id: newLayerId,
             name: newLayerName,
             data: selectedFeaturesCollection,
-            fillColor: "#FF0000", // Red color for extracted features
+            fillColor: getUniqueColor(), // Red color for extracted features
             fillOpacity: 0.7,
             visible: true,
             geometryType: selectedLayer.geometryType
-        }, "#FF0000", 0.7)
+        }, getUniqueColor(), 0.7)
 
         onOpenChange(false)
         clearFilters()

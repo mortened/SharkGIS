@@ -1,6 +1,7 @@
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { useLayers } from "@/hooks/useLayers";
+import { type Feature } from "geojson"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -66,3 +67,13 @@ export const iconForGeometry = (geom: string): string => {
       return "/icons/polygon.svg";
   }
 };
+
+
+export function featureKey(f: Feature, idx: number): string {
+  return (
+    f.id?.toString() ??
+    (f.properties as any)?.id?.toString() ??
+    // the index INSIDE THE ORIGINAL FEATURES ARRAY (stringified)
+    idx.toString()
+  );
+}
