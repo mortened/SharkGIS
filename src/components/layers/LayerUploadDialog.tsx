@@ -10,8 +10,7 @@ import {
   AlertDialogDescription,
 } from "@/components/ui/alert-dialog";
 import { useEffect, useState } from "react";
-import { LayerUploadFile } from "./LayerUploadFile";
-import { useLayers } from "@/hooks/useLayers";
+import { Layer, useLayers } from "@/hooks/useLayers";
 import { v4 as uuidv4 } from "uuid";
 import { LayerSettingsForm } from "./LayerSettingsForm";
 import { BadgeCheck, BookText, Cross } from "lucide-react";
@@ -21,14 +20,10 @@ import {
   MultipleLayerSettingsForm,
   TempLayer,
 } from "./MultipleLayerSettingsForm";
-import Joyride from "react-joyride";
 import { Button } from "../ui/button";
-import { NiceTooltip } from "../tools/NiceToolTip";
 import { UPLOADSTEPS } from "@/tutorial/steps";
-import { createPortal } from "react-dom";
 import { FeatureJoyride } from "@/tutorial/FeatureJoyride";
 import { toastMessage } from "../ToastMessage";
-import { title } from "process";
 
 interface LayerUploadDialogProps {
   open: boolean;
@@ -39,11 +34,11 @@ export function LayerUploadDialog({
   open,
   onOpenChange,
 }: LayerUploadDialogProps) {
-  const [layerName, setLayerName] = useState("");
+  const [, setLayerName] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [fillColor, setFillColor] = useState(getUniqueColor());
-  const [fillOpacity, setFillOpacity] = useState(0.8);
+  //   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [, setFillColor] = useState(getUniqueColor());
+  const [, setFillOpacity] = useState(0.8);
   const { addLayer } = useLayers();
   const [pending, setPending] = useState<TempLayer[]>([]);
   const [runSteps, setRunSteps] = useState(false);
@@ -67,53 +62,53 @@ export function LayerUploadDialog({
     setPending([]);
   }
 
-  const handleAddLayer = async () => {
-    if (selectedFile && layerName) {
-      try {
-        const fileContents = await selectedFile.text();
-        const geoJsonData = JSON.parse(fileContents);
+  //   const handleAddLayer = async () => {
+  //     if (selectedFile && layerName) {
+  //       try {
+  //         const fileContents = await selectedFile.text();
+  //         const geoJsonData = JSON.parse(fileContents);
 
-        addLayer(
-          {
-            data: geoJsonData,
-            name: getUniqueLayerName(layerName),
-            id: uuidv4(),
-            visible: true,
-            fillColor: fillColor,
-            fillOpacity: fillOpacity,
-            geometryType: geoJsonData.features[0].geometry.type as
-              | "Point"
-              | "LineString"
-              | "Polygon"
-              | "MultiPoint"
-              | "MultiLineString"
-              | "MultiPolygon",
-          },
-          fillColor,
-          fillOpacity
-        );
+  //         addLayer(
+  //           {
+  //             data: geoJsonData,
+  //             name: getUniqueLayerName(layerName),
+  //             id: uuidv4(),
+  //             visible: true,
+  //             fillColor: fillColor,
+  //             fillOpacity: fillOpacity,
+  //             geometryType: geoJsonData.features[0].geometry.type as
+  //               | "Point"
+  //               | "LineString"
+  //               | "Polygon"
+  //               | "MultiPoint"
+  //               | "MultiLineString"
+  //               | "MultiPolygon",
+  //           },
+  //           fillColor,
+  //           fillOpacity
+  //         );
 
-        toastMessage({
-          title: "Layer added successfully",
-          description: `${layerName} was added to the map`,
-          icon: BadgeCheck,
-        });
+  //         toastMessage({
+  //           title: "Layer added successfully",
+  //           description: `${layerName} was added to the map`,
+  //           icon: BadgeCheck,
+  //         });
 
-        onOpenChange(false);
-        setLayerName("");
-        setSelectedFile(null);
-        setFillColor(getUniqueColor());
-        setFillOpacity(0.8);
-      } catch (error) {
-        console.error("Error reading file:", error);
-        toastMessage({
-          title: "Error",
-          description: `Error reading file. Please make sure it is valid GeoJSON.`,
-          icon: Cross,
-        });
-      }
-    }
-  };
+  //         onOpenChange(false);
+  //         setLayerName("");
+  //         setSelectedFile(null);
+  //         setFillColor(getUniqueColor());
+  //         setFillOpacity(0.8);
+  //       } catch (error) {
+  //         console.error("Error reading file:", error);
+  //         toastMessage({
+  //           title: "Error",
+  //           description: `Error reading file. Please make sure it is valid GeoJSON.`,
+  //           icon: Cross,
+  //         });
+  //       }
+  //     }
+  //   };
 
   /* ---------- when user selects files ---------- */
   const handleFilesSelect = (files: File[]) => {
@@ -150,7 +145,7 @@ export function LayerUploadDialog({
             fillColor: l.color,
             fillOpacity: l.opacity,
             geometryType: json.features[0].geometry
-              .type as TempLayer["geometryType"],
+              .type as Layer["geometryType"],
           },
           l.color,
           l.opacity

@@ -8,7 +8,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import Joyride from "react-joyride";
 
 interface LayerUploadFilesProps {
   /** All files currently selected in the dialog */
@@ -16,7 +15,6 @@ interface LayerUploadFilesProps {
   /** Called whenever the user adds (or replaces) files */
   onSelect: (files: File[]) => void;
 }
-
 
 export function LayerUploadFiles({
   selected,
@@ -34,7 +32,7 @@ export function LayerUploadFiles({
   const readFiles = (fileList: FileList) => {
     const goodFiles = Array.from(fileList).filter(isGeoJson);
     if (goodFiles.length) {
-      onSelect([...selected, ...goodFiles]);   // ← send complete set
+      onSelect([...selected, ...goodFiles]); // ← send complete set
       setErrorMessage(null);
     } else {
       setErrorMessage("Please upload GeoJSON file(s)");
@@ -89,7 +87,7 @@ export function LayerUploadFiles({
           ref={fileInputRef}
           type="file"
           accept=".json,.geojson"
-          multiple                                    /* ← allow several */
+          multiple /* ← allow several */
           className="hidden"
           onChange={handleFileInput}
         />
@@ -106,18 +104,17 @@ export function LayerUploadFiles({
         {selected.length > 0 && (
           <ul className="text-sm text-gray-600 space-y-0.5 text-center">
             {selected.map((file) => (
-            //   <li key={file.name}>{file.name}</li>
-            //   Delete file with red cross icon
-                <li key={file.name} className="flex justify-between">
+              //   <li key={file.name}>{file.name}</li>
+              //   Delete file with red cross icon
+              <li key={file.name} className="flex justify-between">
                 <span>{file.name}</span>
                 <button
-                onClick={() => handleDelete(file)}
-                className="text-red-500 hover:text-red-700"
+                  onClick={() => handleDelete(file)}
+                  className="text-red-500 hover:text-red-700"
                 >
-                <X className="h-4 w-4" />
+                  <X className="h-4 w-4" />
                 </button>
-            </li>
-          
+              </li>
             ))}
           </ul>
         )}

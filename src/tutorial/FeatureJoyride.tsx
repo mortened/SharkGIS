@@ -1,4 +1,4 @@
-import Joyride, { CallBackProps, Step } from "react-joyride";
+import Joyride, { Step } from "react-joyride";
 import { createPortal } from "react-dom";
 
 interface FeatureJoyrideProps {
@@ -36,18 +36,19 @@ export function FeatureJoyride({
       disableCloseOnEsc={true}
       hideBackButton={false}
       hideCloseButton={false}
-      disableBeacon={true}
+      // disableBeacon={true}
       scrollToFirstStep={false}
       scrollOffset={0}
       floaterProps={{
         disableAnimation: true,
-        disableScrollParentFix: true,
-        autoFocus: false,
+        // disableScrollParentFix: true,
+        // autoFocus: false,
         hideArrow: false,
         offset: 10,
         styles: {
-          zIndex: zIndex + 1,
-          pointerEvents: "auto",
+          wrapper: {
+            pointerEvents: "auto",
+          },
         },
         options: {
           preventOverflow: {

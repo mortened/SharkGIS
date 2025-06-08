@@ -13,7 +13,7 @@ interface TutorialState {
 
 export const useTutorial = create<TutorialState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       phase: -1,
       step:  0,
 

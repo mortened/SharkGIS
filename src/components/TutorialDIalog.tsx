@@ -8,9 +8,7 @@ import {
   AlertDialogTitle,
   AlertDialogDescription,
   AlertDialogFooter,
-  AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
-import StyleSwitcher from "./StyleSwitcher";
 
 interface TutorialDialogProps {
   open: boolean;
@@ -20,7 +18,6 @@ interface TutorialDialogProps {
 export default function TutorialDialog({
   open,
   onOpenChange,
-
 }: TutorialDialogProps) {
   const handleSave = () => {
     onOpenChange(false);
@@ -36,7 +33,6 @@ export default function TutorialDialog({
             Choose basemap, units, coordinate display…
           </AlertDialogDescription>
         </AlertDialogHeader>
-
 
         <AlertDialogFooter>
           <Button onClick={handleSave} className="w-full sm:w-auto">

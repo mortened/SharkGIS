@@ -22,6 +22,7 @@ import { LayerSettingsForm } from "../layers/LayerSettingsForm";
 import { Layer, useLayers } from "@/hooks/useLayers";
 import { Bouncy } from "ldrs/react";
 import "ldrs/react/Bouncy.css";
+import { Feature, Point } from "geojson";
 
 export interface VoronoiDialogProps {
   open: boolean;
@@ -92,11 +93,11 @@ export default function VoronoiDialog({
   function handleVoronoi(inputLayer: Layer): boolean {
     try {
       // Extract all points from the layer
-      const points: turf.Feature<turf.Point>[] = [];
+      const points: Feature<Point>[] = [];
 
       inputLayer.data.features.forEach((feature) => {
         if (feature.geometry.type === "Point") {
-          points.push(feature as turf.Feature<turf.Point>);
+          points.push(feature as Feature<Point>);
         } else if (feature.geometry.type === "MultiPoint") {
           feature.geometry.coordinates.forEach((coord) => {
             points.push(turf.point(coord, feature.properties));
@@ -123,7 +124,7 @@ export default function VoronoiDialog({
 
       // Ensure all features have valid geometry
       const validFeatures = voronoiPolygons.features.filter(
-        (feature) => feature.geometry && feature.geometry.type
+        (feature: Feature) => feature.geometry && feature.geometry.type
       );
 
       if (validFeatures.length === 0) {

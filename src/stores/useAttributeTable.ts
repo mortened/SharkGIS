@@ -20,7 +20,7 @@ interface AttributeTableState {
   setSelectedFeatures: (ids: string[]) => void
 }
 
-export const useAttributeTable = create<AttributeTableState>((set, get) => ({
+export const useAttributeTable = create<AttributeTableState>((set) => ({
   selectedLayerId: null,
   filterConditions: [],
   filteredFeatures: [],

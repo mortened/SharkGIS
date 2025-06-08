@@ -9,7 +9,7 @@ import type {
   MultiPolygon,
   FeatureCollection,
 } from "geojson";
-import { dissolve, union } from "@turf/turf";
+import * as turf from "@turf/turf";
 import { LayerSettingsForm } from "../layers/LayerSettingsForm";
 import { getUniqueColor } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -315,7 +315,7 @@ export default function DissolveDialog({
 
       try {
         // Use turf dissolve which should properly merge adjacent polygons
-        const dissolved = dissolve(fc, { propertyName: field });
+        const dissolved = turf.dissolve(fc, { propertyName: field });
 
         if (dissolved.features.length > 0) {
           // If dissolve worked, return the first (and typically only) result
@@ -337,7 +337,9 @@ export default function DissolveDialog({
         try {
           let result = feats[0];
           for (let i = 1; i < feats.length; i++) {
-            result = union(result, feats[i]) as Feature<Polygon | MultiPolygon>;
+            result = turf.union(result, feats[i]) as Feature<
+              Polygon | MultiPolygon
+            >;
           }
 
           return {
@@ -395,13 +397,13 @@ export default function DissolveDialog({
 
       try {
         // Use turf dissolve
-        const dissolved = dissolve(fc);
+        const dissolved = turf.dissolve(fc);
 
         if (dissolved.features.length > 0) {
           // If we get multiple features back, union them together
           let result = dissolved.features[0];
           for (let i = 1; i < dissolved.features.length; i++) {
-            result = union(result, dissolved.features[i]) as Feature<
+            result = turf.union(result, dissolved.features[i]) as Feature<
               Polygon | MultiPolygon
             >;
           }
@@ -423,7 +425,7 @@ export default function DissolveDialog({
         try {
           let result = features[0];
           for (let i = 1; i < features.length; i++) {
-            result = union(result, features[i]) as Feature<
+            result = turf.union(result, features[i]) as Feature<
               Polygon | MultiPolygon
             >;
           }

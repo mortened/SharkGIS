@@ -1,6 +1,7 @@
 import { useState } from "react";
-import type { Dispatch, SetStateAction, ReactElement } from "react";
+import type { ReactElement } from "react";
 import * as turf from "@turf/turf";
+import type { AllGeoJSON } from "@turf/helpers";
 import { v4 as uuidv4 } from "uuid";
 
 // Type-only geojson imports
@@ -10,10 +11,10 @@ import type {
   Geometry,
   Point,
   MultiPoint,
-  LineString,
-  MultiLineString,
   Polygon,
   MultiPolygon,
+  LineString,
+  MultiLineString,
 } from "geojson";
 
 import { useLayers } from "@/hooks/useLayers";
@@ -39,14 +40,6 @@ import {
 import { BookText, Check, ChevronsUpDown } from "lucide-react";
 import { FeatureJoyride } from "@/tutorial/FeatureJoyride";
 import { CLIP_STEPS } from "@/tutorial/steps";
-import {
-  booleanWithin,
-  lineSplit,
-  polygonToLine,
-  booleanPointInPolygon,
-  along,
-  length,
-} from "@turf/turf";
 import { Bouncy } from "ldrs/react";
 import "ldrs/react/Bouncy.css";
 /**
@@ -174,29 +167,29 @@ export function ClipDialog({
     return kept.length ? turf.multiPoint(kept) : null;
   }
   function clipLine(
-    feat: turf.Feature<turf.LineString | turf.MultiLineString>,
-    maskPoly: turf.Feature<turf.Polygon | turf.MultiPolygon>
-  ): turf.Feature<turf.LineString | turf.MultiLineString> | null {
+    feat: Feature<LineString | MultiLineString>,
+    maskPoly: Feature<Polygon | MultiPolygon>
+  ): Feature<LineString | MultiLineString> | null {
     // If the whole thing is already inside we can short-circuit.
-    if (booleanWithin(feat, maskPoly)) return feat;
+    if (turf.booleanWithin(feat, maskPoly)) return feat;
 
     // 1️⃣ Convert polygon ring(s) to a cutter
-    const cutter = polygonToLine(maskPoly);
+    const cutter = turf.polygonToLine(maskPoly);
 
     // 2️⃣ Split the line wherever it meets the cutter
-    const pieces = lineSplit(feat, cutter);
+    const pieces = turf.lineSplit(feat, cutter);
 
     // 3️⃣ Keep only the pieces that lie inside the mask
-    const kept = pieces.features.filter((ls) => {
-      const mid = along(ls, length(ls) / 2, { units: "kilometers" });
-      return booleanPointInPolygon(mid, maskPoly);
+    const kept = pieces.features.filter((ls: Feature<LineString>) => {
+      const mid = turf.along(ls, turf.length(ls) / 2, { units: "kilometers" });
+      return turf.booleanPointInPolygon(mid, maskPoly);
     });
 
     if (!kept.length) return null;
     if (kept.length === 1) return kept[0];
 
     return turf.multiLineString(
-      kept.map((k) => k.geometry.coordinates),
+      kept.map((k: Feature<LineString>) => k.geometry.coordinates),
       feat.properties
     );
   }
@@ -227,9 +220,14 @@ export function ClipDialog({
 
           // —— build union mask ——
           let mask: Feature<Polygon | MultiPolygon> | null = null;
-          turf.flattenEach(clipLayer.data as turf.AllGeoJSON, (f) => {
-            mask = mask ? safeUnion(mask!, f as any) : (f as any);
-          });
+          turf.flattenEach(
+            clipLayer.data as AllGeoJSON,
+            (f: Feature<Polygon | MultiPolygon>) => {
+              mask = mask
+                ? safeUnion(mask!, f as Feature<Polygon | MultiPolygon>)
+                : (f as Feature<Polygon | MultiPolygon>);
+            }
+          );
 
           if (!mask) {
             resolve(false);
@@ -247,22 +245,34 @@ export function ClipDialog({
 
             const clippedFeatures: Feature<Geometry>[] = [];
 
-            turf.flattenEach(inputLayer.data as turf.AllGeoJSON, (f) => {
-              const t = f.geometry.type;
-              let clipped: Feature<Geometry> | null = null;
+            turf.flattenEach(
+              inputLayer.data as AllGeoJSON,
+              (f: Feature<Geometry>) => {
+                const t = f.geometry.type;
+                let clipped: Feature<Geometry> | null = null;
 
-              if (t === "Point" || t === "MultiPoint") {
-                clipped = clipPoints(f as any, mask!) as any;
-              } else if (t === "LineString" || t === "MultiLineString") {
-                clipped = clipLine(f as any, mask!) as any;
-              } else if (t === "Polygon" || t === "MultiPolygon") {
-                clipped = clipPolygon(f as any, mask!) as any;
-              }
+                if (t === "Point" || t === "MultiPoint") {
+                  clipped = clipPoints(f as Feature<Point | MultiPoint>, mask!);
+                } else if (t === "LineString" || t === "MultiLineString") {
+                  clipped = clipLine(
+                    f as Feature<LineString | MultiLineString>,
+                    mask!
+                  );
+                } else if (t === "Polygon" || t === "MultiPolygon") {
+                  clipped = clipPolygon(
+                    f as Feature<Polygon | MultiPolygon>,
+                    mask!
+                  );
+                }
 
-              if (clipped) {
-                clippedFeatures.push({ ...clipped, properties: f.properties });
+                if (clipped) {
+                  clippedFeatures.push({
+                    ...clipped,
+                    properties: f.properties,
+                  });
+                }
               }
-            });
+            );
 
             if (clippedFeatures.length > 0) {
               const outFC = turf.featureCollection(clippedFeatures);
@@ -442,10 +452,7 @@ function ClipTool({
 
   const allLayers = layers; // any geometry for input
   const polygonLayers = layers.filter(
-    (l) =>
-      l.geometryType === "Polygon" ||
-      l.geometryType === "MultiPolygon" ||
-      l.geometryType === "FeatureCollection"
+    (l) => l.geometryType === "Polygon" || l.geometryType === "MultiPolygon"
   );
 
   const toggleInputLayer = (id: string) => {
@@ -468,7 +475,7 @@ function ClipTool({
 
     // Remove from input layers if it was selected there
     if (newClipId) {
-      setInputLayerIds((prev) => prev.filter((x) => x !== id));
+      setInputLayerIds(inputLayerIds.filter((x) => x !== id));
     }
     setClipOpen(false);
   };

@@ -114,8 +114,10 @@ export function DataTable<TData extends Identifiable>({
       /* ---- (2) one column per property ---- */
       ...propertyKeys.map((key) => ({
         id: key, // <- explicit ID
-        accessorFn: (row: any) => row[key], // <- **NO accessorKey**
-        header: ({ column }) => (
+        accessorFn: (row: TData) => (row as Record<string, unknown>)[key], // <- **NO accessorKey**
+        header: ({
+          column,
+        }: import("@tanstack/react-table").HeaderContext<TData, unknown>) => (
           <Button
             variant="ghost"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
@@ -124,7 +126,9 @@ export function DataTable<TData extends Identifiable>({
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         ),
-        cell: ({ getValue }) => <div>{show(getValue())}</div>,
+        cell: ({ getValue }: { getValue: () => unknown }) => (
+          <div>{show(getValue())}</div>
+        ),
       })),
     ];
   }, [data]);

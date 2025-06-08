@@ -1,11 +1,9 @@
 import { useState, useEffect } from "react";
-import { Group, Layers, Settings, Wrench } from "lucide-react";
+import { Layers, Settings, Wrench } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
-  SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,

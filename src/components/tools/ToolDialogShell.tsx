@@ -6,7 +6,6 @@ import {
   AlertDialogTitle,
   AlertDialogDescription,
   AlertDialogFooter,
-  AlertDialogAction,
   AlertDialogCancel,
 } from "../ui/alert-dialog";
 import { Button } from "../ui/button";
@@ -30,7 +29,6 @@ export function ToolDialogShell({
   onSave,
   children,
   description,
-  className,
   actions,
   saveButtonClassName,
 }: ToolDialogShellProps) {

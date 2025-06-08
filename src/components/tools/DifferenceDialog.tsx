@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { Dispatch, SetStateAction, ReactElement } from "react";
 import * as turf from "@turf/turf";
+import type { AllGeoJSON } from "@turf/helpers";
 import { v4 as uuidv4 } from "uuid";
 
 // 👉 Type‑only imports (works with geojson types too)
@@ -198,11 +199,14 @@ export function DifferenceDialog({
 
           // build unified base
           let baseGeom: Feature<Polygon | MultiPolygon> | null = null;
-          turf.flattenEach(baseLayer.data as turf.AllGeoJSON, (feat) => {
-            baseGeom = baseGeom
-              ? safeUnion(baseGeom, feat as any)
-              : (feat as any);
-          });
+          turf.flattenEach(
+            baseLayer.data as AllGeoJSON,
+            (feat: Feature<Polygon | MultiPolygon>) => {
+              baseGeom = baseGeom
+                ? safeUnion(baseGeom, feat as Feature<Polygon | MultiPolygon>)
+                : (feat as Feature<Polygon | MultiPolygon>);
+            }
+          );
           if (!baseGeom) {
             resolve(false);
             return;
@@ -211,11 +215,14 @@ export function DifferenceDialog({
           // unified subtract
           let subtractGeom: Feature<Polygon | MultiPolygon> | null = null;
           for (const lyr of subtractLayers) {
-            turf.flattenEach(lyr.data as turf.AllGeoJSON, (feat) => {
-              subtractGeom = subtractGeom
-                ? safeUnion(subtractGeom, feat as any)
-                : (feat as any);
-            });
+            turf.flattenEach(
+              lyr.data as AllGeoJSON,
+              (feat: Feature<Polygon | MultiPolygon>) => {
+                subtractGeom = subtractGeom
+                  ? safeUnion(subtractGeom, feat)
+                  : feat;
+              }
+            );
           }
           if (!subtractGeom) return false;
 
@@ -334,10 +341,7 @@ function DifferenceTool({
   const [subtractOpen, setSubtractOpen] = useState(false);
 
   const polygonLayers = layers.filter(
-    (l) =>
-      l.geometryType === "Polygon" ||
-      l.geometryType === "MultiPolygon" ||
-      l.geometryType === "FeatureCollection"
+    (l) => l.geometryType === "Polygon" || l.geometryType === "MultiPolygon"
   );
 
   // helpers
