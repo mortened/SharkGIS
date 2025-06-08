@@ -88,7 +88,6 @@ export default function VoronoiDialog({
         toastMessage({
           title: "Voronoi Failed",
           description: "Need at least 3 points to create Voronoi diagram.",
-          variant: "destructive",
           duration: 4000,
         });
         setIsLoading(false);
@@ -115,7 +114,6 @@ export default function VoronoiDialog({
       toastMessage({
         title: "Voronoi Failed",
         description: "An error occurred during the Voronoi operation.",
-        variant: "destructive",
         duration: 4000,
       });
     } finally {

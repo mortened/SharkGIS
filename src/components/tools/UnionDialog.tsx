@@ -73,7 +73,6 @@ export function UnionDialog({ open, onOpenChange }: UnionDialogProps) {
           title: "Union Failed",
           description:
             "Need at least two valid polygon features to create union.",
-          variant: "destructive",
           duration: 4000,
         });
         setIsLoading(false);

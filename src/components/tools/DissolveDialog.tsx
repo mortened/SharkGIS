@@ -97,7 +97,6 @@ export default function DissolveDialog({
         toastMessage({
           title: "Dissolve Failed",
           description: "No valid polygon features found to dissolve.",
-          variant: "destructive",
           duration: 4000,
         });
         setIsLoading(false);
@@ -126,7 +125,6 @@ export default function DissolveDialog({
         description: `Dissolve operation failed: ${
           error instanceof Error ? error.message : "Unknown error"
         }`,
-        variant: "destructive",
         duration: 4000,
       });
       setIsLoading(false);

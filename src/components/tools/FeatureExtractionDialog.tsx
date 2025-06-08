@@ -58,7 +58,6 @@ export function FeatureExtractionDialog({
         toastMessage({
           title: "No Features Selected",
           description: "Please select at least one feature to extract.",
-          variant: "destructive",
           duration: 4000,
         });
         setLoading(false);
@@ -120,7 +119,6 @@ export function FeatureExtractionDialog({
       toastMessage({
         title: "Extraction Failed",
         description: "An error occurred during the feature extraction.",
-        variant: "destructive",
         duration: 4000,
       });
     } finally {

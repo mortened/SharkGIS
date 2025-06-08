@@ -337,7 +337,6 @@ export function ClipDialog({
           title: "Clip Failed",
           description:
             "No features were clipped. Check that your input layers overlap with the clip polygon.",
-          variant: "destructive",
           duration: 4000,
         });
         setIsLoading(false);
@@ -366,7 +365,6 @@ export function ClipDialog({
       toastMessage({
         title: "Clip Failed",
         description: "An error occurred during the clip operation.",
-        variant: "destructive",
         duration: 4000,
       });
     } finally {

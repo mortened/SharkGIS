@@ -104,7 +104,6 @@ export function DifferenceDialog({
           title: "Difference Failed",
           description:
             "Unable to create difference - check that layers contain valid polygon geometry.",
-          variant: "destructive",
           duration: 4000,
         });
         setIsLoading(false);
@@ -131,7 +130,6 @@ export function DifferenceDialog({
       toastMessage({
         title: "Difference Failed",
         description: "An error occurred during the difference operation.",
-        variant: "destructive",
         duration: 4000,
       });
     } finally {

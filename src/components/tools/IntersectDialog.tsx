@@ -168,7 +168,6 @@ export function IntersectDialog({
         toastMessage({
           title: "Intersection Failed",
           description: "No overlapping area found among selected layers.",
-          variant: "destructive",
           duration: 4000,
         });
         setIsLoading(false);
@@ -196,7 +195,6 @@ export function IntersectDialog({
       toastMessage({
         title: "Intersection Failed",
         description: "An error occurred during the intersection operation.",
-        variant: "destructive",
         duration: 4000,
       });
     } finally {
