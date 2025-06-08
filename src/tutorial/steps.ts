@@ -148,7 +148,7 @@ export const CLIP_STEPS: Step[] = [
   },
   {
     target: ".clip-btn",
-    content: "Click to clip the layers. Be patient, this may take a few seconds.",
+    content: "Click to clip the layers.",
     disableBeacon: true,
     placement: "left",
   },
@@ -163,19 +163,19 @@ export const DISSOLVE_STEPS: Step[] = [
   },
   {
     target: ".dissolve-input-layer",
-    content: "Select the trondheim-depth layer as the input layer.",
+    content: "Select the extracted trondheim-depth layer as the input layer.",
     disableBeacon: true,
     placement: "left",
   },
   {
     target: ".dissolve-field",
-    content: "Select the 'maksimumsdybde' field to dissolve polygons with the same maximum depth value.",
+    content: "Keep this field unselected to dissolve all features into one.",
     disableBeacon: true,
     placement: "left",
   },
   {
     target: ".dissolve-form",
-    content: "Name the new layer 'depth-dissolved' and adjust the styles if needed.",
+    content: "Name the new layer 'shallow-water' and set a light blue color.",
     disableBeacon: true,
     placement: "left",
   },
@@ -196,7 +196,7 @@ export const BUFFER_STEPS: Step[] = [
   },
   {
     target: ".buffer-input-layer",
-    content: "Select the AIS layer as the input layer.",
+    content: "Select the clipped AIS layer as the input layer.",
     disableBeacon: true,
     placement: "left",
   },
@@ -207,9 +207,16 @@ export const BUFFER_STEPS: Step[] = [
     placement: "right",
   },
   {
-    target: ".buffer-btn",
-    content: "Click to create the buffer.",
+    target: ".buffer-form",
+    content: "Name the new layer 'traffic' and make it red.",
     disableBeacon: true,
+    placement: "top",
+  },
+  {
+    target: ".buffer-btn",
+    content: "Click save to create the buffer.",
+    disableBeacon: true,
+    placement: "left",
   }
 ]
 
@@ -234,7 +241,7 @@ export const DIFFERENCE_STEPS: Step[] = [
   },
   {
     target: ".difference-styles",
-    content: "Name the new layer 'Kayaking areas' and set a 20% opacity.",
+    content: "Name the new layer 'kayaking-areas', make it green and set a 20% opacity.",
     disableBeacon: true,
     placement: "top",
   },

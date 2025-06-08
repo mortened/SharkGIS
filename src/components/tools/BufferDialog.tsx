@@ -160,16 +160,16 @@ export function BufferDialog({ open, onOpenChange }: BufferDialogProps) {
             setLayerName={setLayerName}
             errors={errors}
           />
-
-          <LayerSettingsForm
-            layerName={layerName}
-            onNameChange={setLayerName}
-            fillColor={fillColor}
-            fillOpacity={fillOpacity}
-            onFillColorChange={setFillColor}
-            onFillOpacityChange={setFillOpacity}
-          />
-
+          <div className="buffer-form">
+            <LayerSettingsForm
+              layerName={layerName}
+              onNameChange={setLayerName}
+              fillColor={fillColor}
+              fillOpacity={fillOpacity}
+              onFillColorChange={setFillColor}
+              onFillOpacityChange={setFillOpacity}
+            />
+          </div>
           {/* ——— loader ——— */}
           {isLoading && (
             <div className="flex justify-center items-center mt-4">

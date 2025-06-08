@@ -70,14 +70,18 @@ export const TUTORIAL_PHASES: TutorialPhase[] = [
         body: "Subract the traffic buffers from the shallow water areas to find safe kayaking zones. Open the Difference Tool from the sidebar and follow the steps inside the tool.",
     },
     {
+        title: "Prepare for Route Planning",
+        body: "Now that you have the safe kayaking areas, you are nearly ready to plan your route. Hide (or delete) all layers except the 'kayaking-areas' layer and the clipped swimming-spots layer."
+    },
+    {
         title: "Plan Your Route",
-        body: "Create your kayak route using the Line Drawing Tool. Select 2-3 swimming spots as waypoints and draw your path through the green 'safe-kayak-zones', avoiding traffic areas and deep water. Follow the steps inside the tool by clicking the book icon in the bottom toolbar which appears when you start drawing.",
+        body: "Plan your kayak route using the Line Drawing Tool. Choose 2–3 swimming spots as waypoints, and draw your path through the green 'safe-kayak-zones'. To access guidance while drawing, click the book icon in the bottom toolbar that appears once the tool is active.\n\nTip: Before starting, click on the clipped swimming spots layer to highlight it with a red outline—this makes the spots easier to see while planning your route.\n\nNote: You may notice that the green kayaking zones don't fully reach the swimming spots. This is because the depth dataset doesn't extend all the way to the shoreline—but it's still shallow there, so you can assume safe water access near the beach/swimming spots.",
         image: getPublicPath("/route.png"),
         imageAlt: "Example kayak route through safe waters",
     },
     {
         title: "Mission Accomplished",
-        body: "Congratulations! You've successfully completed a comprehensive GIS analysis workflow. You extracted municipal boundaries, identified safe water depths, avoided shipping traffic zones, and planned an optimal kayak route.\n\nNext steps include exporting your route as GPX for GPS devices, experimenting with different styling options, and exploring other GIS tools. In real-world applications, always verify current weather and tide conditions before any water activities.",
+        body: "Congratulations! You've successfully completed the SharkGIS tutorial.\n\nTo save your route, click the three dots next to your newly created line layer (e.g., 'Layer X'), hover over 'Download Layer', and choose your preferred format—GeoJSON, GPX, or image.\n\nTip: If you download an image, it will include all currently visible layers. To customize the export, hide any layers you don’t want shown before downloading.\n\nWant to take it further? Export your route as a GPX file and load it into a GPS device or mobile app to try it out in the real world. Or stay in SharkGIS to explore new areas and sharpen your kayak route planning skills!",
     },
 ];
 
@@ -123,7 +127,7 @@ export const POINTERS: Record<number, Pointer> = {
         content: "Calculate safe areas by removing traffic zones from shallow water.",
         placement: "right",
     },
-    13: {
+    14: {
         target: ".line-drawing-btn",
         content: "Draw your kayak route.",
         placement: "bottom",
