@@ -30,7 +30,7 @@ export const TUTORIAL_PHASES: TutorialPhase[] = [
     },
     {
         title: "Prepare Your Data",
-        body: "Download the necessary data files from this [link](https://github.com/mortened/SharkGIS/blob/main/src/tutorial/data/data.zip). It contains:\n\n- `trondelag.geojson`: Trøndelag county boundary\n- `trondheim-depth.geojson`: Water depth polygons for Trondheim\n- `AIS.geojson`: Cleaned Automatic Identification System (AIS) data for boat/ships locations on a day in May 2025 \n- `swimming-spots.geojson`: Popular swimming spots around Norway",
+        body: "Download and unpack the necessary data files from this [link](https://github.com/mortened/SharkGIS/blob/main/src/tutorial/data/data.zip). It contains:\n\n- `trondelag.geojson`: Trøndelag county boundary\n- `trondheim-depth.geojson`: Water depth polygons for Trondheim\n- `AIS.geojson`: Cleaned Automatic Identification System (AIS) data for boat/ships locations on a day in May 2025 \n- `swimming-spots.geojson`: Popular swimming spots around Norway",
     },
     {
         title: "Upload files to SharkGIS",
@@ -47,7 +47,7 @@ export const TUTORIAL_PHASES: TutorialPhase[] = [
     },
     {
         title: "Clean Up Your Workspace",
-        body: "Delete the original 'trondelag-boundary' layer since you no longer need it. Click the three dots next to the layer name and select Delete Layer.\n\nNext, style your Trondheim boundary for better visibility. Click the three dots next to 'trondheim-boundary' and choose Layer Settings. Set the opacity to 10% so it remains visible but unobtrusive, and change the color to light gray.",
+        body: "Delete the original 'trondelag' layer since you no longer need it. Click the three dots next to the layer name and select Delete Layer.\n\nNext, style and rename your 'trondelag-extracted' layer. Click the three dots next to it, choose Layer Settings, and rename it to 'trondheim'. Also set a low opacity and a light color, or hide it if you prefer.",
     },
     {
         title: "Clip The Data",
