@@ -31,7 +31,7 @@ export default function SettingsDialog({
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       {/* Increased max width to make the dialog wider */}
-      <AlertDialogContent className="w-full max-w-xl sm:max-w-2xl">
+      <AlertDialogContent className="w-full max-w-md sm:max-w-xl">
         <AlertDialogHeader>
           <AlertDialogTitle>Map settings</AlertDialogTitle>
           <AlertDialogDescription>
