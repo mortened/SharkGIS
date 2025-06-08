@@ -30,7 +30,7 @@ export const TUTORIAL_PHASES: TutorialPhase[] = [
     },
     {
         title: "Prepare Your Data",
-        body: "Download the necessary data files from this [link](https://example.com/trondheim-kayak-data.zip). It contains:\n\n- `trondelag-boundary.geojson`: Trøndelag county boundary\n- `trondheim-depth.geojson`: Water depth polygons for Trondheim\n- `trondheim-ais.geojson`: Cleaned Automatic Identification System (AIS) data for boat/ships locations on a day in May 2025 \n- `swimming-spots.geojson`: Popular swimming spots around Norway",
+        body: "Download the necessary data files from this [link](https://example.com/trondheim-kayak-data.zip). It contains:\n\n- `trondelag.geojson`: Trøndelag county boundary\n- `trondheim-depth.geojson`: Water depth polygons for Trondheim\n- `AIS.geojson`: Cleaned Automatic Identification System (AIS) data for boat/ships locations on a day in May 2025 \n- `swimming-spots.geojson`: Popular swimming spots around Norway",
     },
     {
         title: "Upload files to SharkGIS",
