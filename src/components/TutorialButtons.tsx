@@ -29,6 +29,14 @@ export default function TutorialButtons() {
   const { phase, nextPhase, prevPhase, reset } = useTutorial();
   const [isOpen, setIsOpen] = useState(false);
 
+  // Make link open in new tab
+  const renderer = new marked.Renderer();
+  renderer.link = function ({ href, text }) {
+    return `<a href="${href}" target="_blank" rel="noopener noreferrer">${text}</a>`;
+  };
+
+  marked.setOptions({ renderer });
+
   // Helper function to stop popover from closing when clicking the tutorial buttons
   const stopOutsideClose = {
     onPointerDown: (e: React.PointerEvent) => {
