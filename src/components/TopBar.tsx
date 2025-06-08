@@ -3,13 +3,15 @@ import { getPublicPath, getUniqueColor } from "@/lib/utils"
 import { Sidebar } from "./ui/sidebar"
 import { Button } from "./ui/button"
 import { LayerUploadDialog } from "./layers/LayerUploadDialog"
-import { Check, Plus } from "lucide-react"
+import { BookText, Check, Plus } from "lucide-react"
 import { useDrawStore } from "@/hooks/useDrawStore"
 import { useSidebar } from "./ui/sidebar"
 import { X, RotateCcw } from "lucide-react"
 import { FeatureCollection } from "geojson"
 import { Layer, useLayers } from "@/hooks/useLayers"
 import { NiceTooltip } from "./tools/NiceToolTip"
+import { FeatureJoyride } from "@/tutorial/FeatureJoyride"
+import { ROUTE_DRAWING_STEPS } from "@/tutorial/steps"
 
 
 export default function TopBar() {
@@ -20,6 +22,14 @@ export default function TopBar() {
   const draw = useDrawStore(state => state.draw) 
   const {setOpen} = useSidebar()
   const {addLayer, layers} = useLayers()
+  const [runRouteSteps, setRunRouteSteps] = useState(false)
+  const [routeStepIndex, setRouteStepIndex] = useState(0)
+
+  const routeBookTrigger = (
+  <Button onClick={() => setRunRouteSteps(true)} variant="secondary" size="icon">
+    <BookText style={{ width: "1.8rem", height: "1.8rem", fill: '#ff8847' }} />
+  </Button>
+)
   
   function drawLayer(geometry: string): void {
         if (!draw) return
@@ -86,7 +96,7 @@ export default function TopBar() {
         
         <div className="flex flex-row justify-center">
             <NiceTooltip label="Upload GeoJSON layer(s) to the map" side="top">
-            <Button variant="ghost" size="default" onClick={() => setIsDialogOpen(true)} className="flex flex-row items-center" disabled={isDisabled}>
+            <Button variant="ghost" size="default" onClick={() => setIsDialogOpen(true)} className="flex flex-row items-center upload-btn" disabled={isDisabled}>
                 <Plus className="h-8 w-8" />
                 <span className="text-xs">Upload</span>
 
@@ -103,7 +113,7 @@ export default function TopBar() {
                     </Button>
                 </NiceTooltip>
                 <NiceTooltip label="Draw a new line layer on the map" side="top">
-                    <Button variant="ghost" size="sm" className=" h-100" onClick={() => drawLayer("line")} disabled={isDisabled}>
+                    <Button variant="ghost" size="sm" className=" h-100 line-drawing-btn" onClick={() => drawLayer("line")} disabled={isDisabled}>
                     <img src={getPublicPath(`/icons/line.svg`)} className="h-6 w-6"/> 
                     </Button>
                 </NiceTooltip>
@@ -117,8 +127,9 @@ export default function TopBar() {
     </Sidebar>
 
     {isDisabled && (
-        <Sidebar side="bottom" className="bg-white/90">
+        <Sidebar side="bottom" className="bg-white/90 bottom-toolbar">
             <div className="flex flex-row justify-center">
+                {activeGeometry === "line" && routeBookTrigger}
                 <NiceTooltip label="Cancel drawing and delete all drawn features" side="top">
                     <Button variant="ghost" size="default" onClick={() => {
                         if (!draw) return
@@ -154,7 +165,7 @@ export default function TopBar() {
                     </Button>
                 </NiceTooltip>
                 <NiceTooltip label="Finish drawing and save the layer" side="top">
-                    <Button variant="ghost" size="default" onClick={() => {
+                    <Button variant="ghost" size="default" className="finish-btn" onClick={() => {
                         setIsDisabled(false)
                         saveLayer(draw?.getAll() ?? null)
                         draw?.deleteAll()
@@ -166,6 +177,15 @@ export default function TopBar() {
             </div>
         </Sidebar>
     )}
+
+    <FeatureJoyride
+    steps={ROUTE_DRAWING_STEPS}
+    run={runRouteSteps && isDisabled && activeGeometry === "line"}
+    onStop={() => { setRunRouteSteps(false); setRouteStepIndex(0); }}
+    stepIndex={routeStepIndex}
+    onStepChange={(index) => setRouteStepIndex(index)}
+    disableOverlay
+    />
 
     </>
 

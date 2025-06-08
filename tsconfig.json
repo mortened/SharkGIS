@@ -10,6 +10,10 @@
       "@/*": ["./src/*"]
     },
     "noUnusedLocals": false,
-    "noUnusedParameters": false
+    "noUnusedParameters": false,
+    "module": "esnext",           
+    "moduleResolution": "node16",  
+    "target": "es2021",
+    "skipLibCheck": false
   }
 }

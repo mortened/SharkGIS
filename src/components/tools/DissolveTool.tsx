@@ -9,9 +9,8 @@ import {
   CommandList,
   CommandEmpty,
 } from "../ui/command"
-import { Input } from "../ui/input"
 import { Check, ChevronsUpDown } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn, getUniqueLayerName } from "@/lib/utils"
 import { useLayers } from "@/hooks/useLayers"
 
 interface DissolveToolProps {
@@ -21,6 +20,9 @@ interface DissolveToolProps {
   setDissolveField: (f: string | null) => void
   layerName: string
   setLayerName: (n: string) => void
+  errors: {
+    layer: boolean
+  }
 }
 
 export default function DissolveTool({
@@ -30,12 +32,14 @@ export default function DissolveTool({
   setDissolveField,
   layerName,
   setLayerName,
+  errors,
 }: DissolveToolProps) {
   const { layers } = useLayers()
-  const [open, setOpen] = useState(false)
+  const [layerOpen, setLayerOpen] = useState(false)
+  const [fieldOpen, setFieldOpen] = useState(false)
 
   const selected = layers.find((l) => l.id === selectedLayerId)
-  const buttonLabel = selected ? selected.name : "Choose layer"
+  const buttonLabel = selected ? selected.name : "Choose input layer"
 
   /** list attribute keys present in the first feature (simple heuristic) */
   const availableFields = useMemo(() => {
@@ -45,91 +49,46 @@ export default function DissolveTool({
   }, [selected])
 
   return (
-    <div className="space-y-4">
-
-      <div className="flex flex-row gap-4">
-      {/* layer chooser */}
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="default"
-            role="combobox"
-          >
-            {buttonLabel}
-            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-[220px] p-0">
-          <Command>
-            <CommandInput placeholder="Search layer..." />
-            <CommandList>
-              <CommandEmpty>No layers found.</CommandEmpty>
-              <CommandGroup>
-                {layers.map((l) => (
-                  <CommandItem
-                    key={l.id}
-                    value={l.name}
-                    onSelect={() => {
-                      setSelectedLayerId(l.id)
-                      setLayerName(`${l.name}-dissolve`)
-                      setDissolveField(null) // reset field when layer changes
-                      setOpen(false)
-                    }}
-                  >
-                    <Check
-                      className={cn(
-                        "mr-2 h-4 w-4",
-                        l.id === selectedLayerId ? "opacity-100" : "opacity-0"
-                      )}
-                    />
-                    {l.name}
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
-
-      {/* optional attribute field */}
-      {selected && availableFields.length > 0 && (
-        <Popover>
+    <>
+      <div className="space-y-4">
+        <Popover open={layerOpen} onOpenChange={setLayerOpen}>
           <PopoverTrigger asChild>
-            <Button variant="secondary">
-              {dissolveField ?? "Dissolve by field (optional)"}
+            <Button
+              variant="default"
+              role="combobox"
+              className={cn(
+                "w-full justify-between dissolve-input-layer",
+                errors.layer && "border-red-500 border-2"
+              )}
+            >
+              {buttonLabel}
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-[220px] p-0">
+          <PopoverContent className="w-full p-0">
             <Command>
+              <CommandInput placeholder="Search layer..." />
               <CommandList>
+                <CommandEmpty>No layers found.</CommandEmpty>
                 <CommandGroup>
-                  <CommandItem
-                    key="__none__"
-                    value="None"
-                    onSelect={() => setDissolveField(null)}
-                  >
-                    <Check
-                      className={cn(
-                        "mr-2 h-4 w-4",
-                        dissolveField === null ? "opacity-100" : "opacity-0"
-                      )}
-                    />
-                    (merge all)
-                  </CommandItem>
-                  {availableFields.map((fld) => (
+                  {layers.map((l) => (
                     <CommandItem
-                      key={fld}
-                      value={fld}
-                      onSelect={() => setDissolveField(fld)}
+                      key={l.id}
+                      value={l.name}
+                      onSelect={() => {
+                        setSelectedLayerId(l.id)
+                        setLayerName(getUniqueLayerName(`${l.name}-dissolve`))
+                        setDissolveField(null) // reset field when layer changes
+                        setLayerOpen(false)
+                      }}
                     >
                       <Check
                         className={cn(
                           "mr-2 h-4 w-4",
-                          fld === dissolveField ? "opacity-100" : "opacity-0"
+                          l.id === selectedLayerId ? "opacity-100" : "opacity-0"
                         )}
                       />
-                      {fld}
+                      {l.name}
                     </CommandItem>
                   ))}
                 </CommandGroup>
@@ -137,16 +96,61 @@ export default function DissolveTool({
             </Command>
           </PopoverContent>
         </Popover>
-        
-      )}
 
-    </div>
+        {/* optional attribute field */}
+        {selected && availableFields.length > 0 && (
+          <Popover open={fieldOpen} onOpenChange={setFieldOpen}>
+            <PopoverTrigger asChild>
+              <Button variant="secondary" className="w-full justify-between dissolve-field">
+                {dissolveField ?? "Dissolve by field (optional)"}
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-full p-0">
+              <Command>
+                <CommandList>
+                  <CommandGroup>
+                    <CommandItem
+                      key="__none__"
+                      value="None"
+                      onSelect={() => setDissolveField(null)}
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          dissolveField === null ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      (merge all)
+                    </CommandItem>
+                    {availableFields.map((fld) => (
+                      <CommandItem
+                        key={fld}
+                        value={fld}
+                        onSelect={() => setDissolveField(fld)}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            fld === dissolveField ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                      {fld}
+                    </CommandItem>
+                  ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
+        )}
 
-      <Input
-        placeholder="Output layer name"
-        value={layerName}
-        onChange={(e) => setLayerName(e.target.value)}
-      />
-    </div>
+        <div className="text-red-500 text-sm m-auto text-center pb-2">
+          {errors.layer && (
+            <p>Please select a layer.</p>
+          )}
+        </div>
+      </div>
+    </>
   )
 }

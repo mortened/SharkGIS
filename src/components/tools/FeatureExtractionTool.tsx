@@ -40,10 +40,10 @@ export default function FeatureExtractionDialog({
 
     return(
         <div className="flex flex-col h-full">
-            <div className="flex flex-row justify-between mb-2">
+            <div className="flex flex-row justify-between mb-2 ">
                 <Popover open={open} onOpenChange={setOpen}>
                     <PopoverTrigger asChild>
-                        <Button variant="default" role="combobox" aria-expanded={open} className="w-[200px] justify-between">
+                        <Button variant="default" role="combobox" aria-expanded={open} className="w-[200px] justify-between input-layer">
                             {buttonLabel}
                             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
@@ -98,7 +98,7 @@ export default function FeatureExtractionDialog({
                 </div>
             </div>
             
-            <div className="flex flex-col flex-1 min-h-0">
+            <div className="flex flex-col flex-1 min-h-0 extract-results">
                 {showFilters && (
                     <div className="border rounded-lg p-3 bg-muted/50 mb-2">
                         <FilterControls />

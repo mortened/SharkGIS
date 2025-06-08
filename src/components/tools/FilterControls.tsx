@@ -44,7 +44,7 @@ export function FilterControls() {
     <div className="space-y-4">
       <div className="flex gap-8">
         <Select value={selectedField} onValueChange={setSelectedField}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-[180px] select-field" data-testid="select-field">
             <SelectValue placeholder="Select field" />
           </SelectTrigger>
           <SelectContent>
@@ -57,7 +57,7 @@ export function FilterControls() {
         </Select>
 
         <Select value={selectedOperator} onValueChange={(value: any) => setSelectedOperator(value)}>
-          <SelectTrigger className="w-[120px]">
+          <SelectTrigger className="w-[120px] operator-select" data-testid="operator-select">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -74,10 +74,17 @@ export function FilterControls() {
           value={filterValue}
           onChange={(e) => setFilterValue(e.target.value)}
           placeholder="Value"
-          className="w-[180px]"
+          className="w-[180px] value-input"
+          data-testid="value-input"
         />
 
-        <Button className="ml-auto" onClick={handleAddFilter}>Add Filter</Button>
+        <Button 
+          className="ml-auto" 
+          onClick={handleAddFilter}
+          data-testid="add-filter-btn"
+        >
+          Add Filter
+        </Button>
       </div>
 
       {/* Display active filters horizontally */}
@@ -105,4 +112,4 @@ export function FilterControls() {
       )}
     </div>
   )
-} 
+}

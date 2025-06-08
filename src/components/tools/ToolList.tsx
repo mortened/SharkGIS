@@ -9,6 +9,7 @@ import { UnionDialog } from "./UnionDialog"
 import { IntersectDialog } from "./IntersectDialog"
 import { DifferenceDialog } from "./DifferenceDialog"
 import { ClipDialog } from "./ClipDialog"
+import VoronoiDialog from "./VoronoiDialog"
 
 const tools = [
     { name: "Buffer", icon: "buffer" },
@@ -39,8 +40,8 @@ export default function ToolList() {
                     variant="ghost"
                     size="lg"
                     onClick={() => openToolDialog(item.name)}
-                    className="m-2 justify-start"
-                >
+                    className={`m-2 justify-start${item.name === "Feature extraction" ? " feature-extractor-btn" : ""}${item.name === "Clip" ? " clip-tool-btn" : ""}${item.name === "Dissolve" ? " dissolve-tool-btn" : ""} ${item.name === "Buffer" ? " buffer-tool-btn" : ""} ${item.name === "Difference" ? " difference-tool-btn" : ""} `}
+                    >
                     <img
                         src={getPublicPath(`/icons/${item.icon}.svg`)}
                         alt={item.name}
@@ -88,19 +89,20 @@ export default function ToolList() {
                 />
             )}
 
-            {/* {activeTool === "Voronoi" && (
-                <PolygonToolDialog
+            {activeTool === "Voronoi" && (
+                <VoronoiDialog
                     open={isDialogOpen}
                     onOpenChange={setIsDialogOpen}
-                    operation="Voronoi"
                 />
-            )} */}
+            )}
 
             {activeTool === "Feature extraction" && (
+                <div className="feature-extractor">
                 <FeatureExtractionDialog
                     open={isDialogOpen}
                     onOpenChange={setIsDialogOpen}
                 />
+                </div>
                 )}
         </div>
     )

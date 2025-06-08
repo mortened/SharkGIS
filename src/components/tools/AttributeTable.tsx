@@ -35,13 +35,13 @@ export function AttributeTable() {
           case "!=":
             return value != filterValue
           case ">":
-            return value > filterValue
+            return Number(value) > Number(filterValue)
           case "<":
-            return value < filterValue
+            return Number(value) < Number(filterValue)
           case ">=":
-            return value >= filterValue
+            return Number(value) >= Number(filterValue)
           case "<=":
-            return value <= filterValue
+            return Number(value) <= Number(filterValue)
           default:
             return true
         }
@@ -53,7 +53,7 @@ export function AttributeTable() {
   }));
 
   return (
-    <div className="h-full flex flex-col min-h-0">
+    <div className="h-full flex flex-col min-h-0 attribute-table">
       <DataTable data={filteredData} />
     </div>
   )

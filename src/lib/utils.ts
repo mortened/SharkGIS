@@ -77,3 +77,5 @@ export function featureKey(f: Feature, idx: number): string {
     idx.toString()
   );
 }
+
+export type ExportFormat = "geojson" | "gpx" | "png";

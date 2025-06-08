@@ -1,7 +1,7 @@
-import { useState } from "react"
-import type { Dispatch, SetStateAction, ReactElement } from "react"
-import * as turf from "@turf/turf"
-import { v4 as uuidv4 } from "uuid"
+import { useState } from "react";
+import type { Dispatch, SetStateAction, ReactElement } from "react";
+import * as turf from "@turf/turf";
+import { v4 as uuidv4 } from "uuid";
 
 // Type-only geojson imports
 import type {
@@ -14,15 +14,20 @@ import type {
   MultiLineString,
   Polygon,
   MultiPolygon,
-} from "geojson"
+} from "geojson";
 
-import { useLayers } from "@/hooks/useLayers"
-import { ToolDialogShell } from "./ToolDialogShell"
-import { LayerSettingsForm } from "../layers/LayerSettingsForm"
-import { cn, getUniqueColor, getUniqueLayerName } from "@/lib/utils"
+import { useLayers } from "@/hooks/useLayers";
+import { ToolDialogShell } from "./ToolDialogShell";
+import { LayerSettingsForm } from "../layers/LayerSettingsForm";
+import { MultipleLayerSettingsForm } from "../layers/MultipleLayerSettingsForm";
+import { cn, getUniqueColor, getUniqueLayerName } from "@/lib/utils";
 
-import { Button } from "@/components/ui/button"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Button } from "@/components/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Command,
   CommandEmpty,
@@ -30,324 +35,570 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command"
-import { Check, ChevronsUpDown } from "lucide-react"
-
+} from "@/components/ui/command";
+import { BookText, Check, ChevronsUpDown } from "lucide-react";
+import { FeatureJoyride } from "@/tutorial/FeatureJoyride";
+import { CLIP_STEPS } from "@/tutorial/steps";
+import {
+  booleanWithin,
+  lineSplit,
+  polygonToLine,
+  booleanPointInPolygon,
+  along,
+  length,
+} from "@turf/turf";
+import { Bouncy } from "ldrs/react";
+import "ldrs/react/Bouncy.css";
 /**
- * ClipDialog — Clips an *input* layer (points, lines or polygons) by one or more *polygon* clip layers.
- *
- * Patch 1 (2025-05-29) — initial implementation.
+ * ClipDialog — Clips multiple *input* layers (points, lines or polygons) by one *polygon* clip layer.
+ * Creates separate clipped layers for each input layer.
  */
-export interface ClipDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
+
+export interface TempClippedLayer {
+  inputLayerId: string;
+  name: string;
+  color: string;
+  opacity: number;
 }
 
-export function ClipDialog({ open, onOpenChange }: ClipDialogProps): ReactElement {
-  const { layers, addLayer } = useLayers()
+export interface ClipDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+export function ClipDialog({
+  open,
+  onOpenChange,
+}: ClipDialogProps): ReactElement {
+  const { layers, addLayer } = useLayers();
+  const [runSteps, setRunSteps] = useState(false); // Whether to run the tutorial steps
+  const [stepIndex, setStepIndex] = useState(0); // Track current step
+  const [isLoading, setIsLoading] = useState(false);
+
+  const bookTrigger = (
+    <Button onClick={() => setRunSteps(true)} variant="secondary" size="icon">
+      <BookText
+        style={{ width: "1.8rem", height: "1.8rem", fill: "#ff8847" }}
+      />
+    </Button>
+  );
+
+  function handleTutorialStop() {
+    setRunSteps(false);
+    setStepIndex(0); // Reset step index when tour stops
+  }
+
+  function handleStepChange(newStepIndex: number) {
+    setStepIndex(Math.max(0, Math.min(newStepIndex, CLIP_STEPS.length - 1)));
+  }
 
   // ——— form state ———
-  const [inputLayerId, setInputLayerId] = useState<string | null>(null)
-  const [clipLayerIds, setClipLayerIds] = useState<string[]>([])
-  const [layerName, setLayerName] = useState<string>("")
-  const [fillColor, setFillColor] = useState<string>(getUniqueColor())
-  const [fillOpacity, setFillOpacity] = useState<number>(1)
+  const [inputLayerIds, setInputLayerIds] = useState<string[]>([]);
+  const [clipLayerId, setClipLayerId] = useState<string>("");
+  const [outputLayers, setOutputLayers] = useState<TempClippedLayer[]>([]);
   const [errors, setErrors] = useState<{ input: boolean; clip: boolean }>({
     input: false,
     clip: false,
-  })
+  });
+
+  function resetForm() {
+    setIsLoading(false);
+    setInputLayerIds([]);
+    setClipLayerId("");
+    setOutputLayers([]);
+    setErrors({ input: false, clip: false });
+  }
+
+  // Update output layers when input selection changes
+  const updateOutputLayers = (newInputLayerIds: string[]) => {
+    const currentLayerIds = new Set(outputLayers.map((l) => l.inputLayerId));
+    const usedColors = new Set(outputLayers.map((l) => l.color));
+
+    // Add new layers
+    const newLayers: TempClippedLayer[] = newInputLayerIds
+      .filter((id) => !currentLayerIds.has(id))
+      .map((id) => {
+        const inputLayer = layers.find((l) => l.id === id);
+        const uniqueColor = getUniqueColor([...usedColors]);
+        usedColors.add(uniqueColor);
+
+        return {
+          inputLayerId: id,
+          name: getUniqueLayerName(`${inputLayer?.name || "layer"}-clip`),
+          color: uniqueColor,
+          opacity: 0.8,
+        };
+      });
+
+    // Keep existing layers that are still selected
+    const keptLayers = outputLayers.filter((l) =>
+      newInputLayerIds.includes(l.inputLayerId)
+    );
+
+    setOutputLayers([...keptLayers, ...newLayers]);
+  };
 
   // ——— helpers ———
   /** Resilient polygon union */
   function safeUnion(
     a: Feature<Polygon | MultiPolygon>,
-    b: Feature<Polygon | MultiPolygon>,
+    b: Feature<Polygon | MultiPolygon>
   ): Feature<Polygon | MultiPolygon> {
     try {
-      const res = turf.union(a as any, b as any)
-      if (res) return res as Feature<Polygon | MultiPolygon>
+      const res = turf.union(a as any, b as any);
+      if (res) return res as Feature<Polygon | MultiPolygon>;
     } catch (_) {
       /* swallow */
     }
-    const coords: Position[][][] = []
+    const coords: Position[][][] = [];
     const push = (f: Feature<Polygon | MultiPolygon>) => {
-      if (f.geometry.type === "Polygon") coords.push(f.geometry.coordinates)
-      else coords.push(...f.geometry.coordinates)
-    }
-    push(a)
-    push(b)
-    return turf.multiPolygon(coords) as Feature<Polygon | MultiPolygon>
+      if (f.geometry.type === "Polygon") coords.push(f.geometry.coordinates);
+      else coords.push(...f.geometry.coordinates);
+    };
+    push(a);
+    push(b);
+    return turf.multiPolygon(coords) as Feature<Polygon | MultiPolygon>;
   }
 
   /** Clip a single Point / MultiPoint */
   function clipPoints(
     feat: Feature<Point | MultiPoint>,
-    maskPoly: Feature<Polygon | MultiPolygon>,
+    maskPoly: Feature<Polygon | MultiPolygon>
   ): Feature<Point | MultiPoint> | null {
     if (feat.geometry.type === "Point") {
-      return turf.booleanPointInPolygon(feat, maskPoly) ? feat : null
+      return turf.booleanPointInPolygon(feat, maskPoly) ? feat : null;
     }
     const kept: Position[] = feat.geometry.coordinates.filter((pt) =>
-      turf.booleanPointInPolygon(turf.point(pt), maskPoly),
-    )
-    return kept.length ? turf.multiPoint(kept) : null
+      turf.booleanPointInPolygon(turf.point(pt), maskPoly)
+    );
+    return kept.length ? turf.multiPoint(kept) : null;
   }
-
-  /** Clip a single Line / MultiLine */
   function clipLine(
-    feat: Feature<LineString | MultiLineString>,
-    maskPoly: Feature<Polygon | MultiPolygon>,
-  ): Feature<LineString | MultiLineString> | null {
-    const segments: Feature<LineString>[] = []
-    const fc = turf.lineSplit(feat, maskPoly)
-    fc.features.forEach((seg) => {
-      const mid = turf.along(seg, turf.length(seg) / 2)
-      if (turf.booleanPointInPolygon(mid, maskPoly)) segments.push(seg)
-    })
-    if (!segments.length) return null
-    if (segments.length === 1) return segments[0]
-    const mlCoords = segments.map((s) => s.geometry.coordinates)
-    return turf.multiLineString(mlCoords)
+    feat: turf.Feature<turf.LineString | turf.MultiLineString>,
+    maskPoly: turf.Feature<turf.Polygon | turf.MultiPolygon>
+  ): turf.Feature<turf.LineString | turf.MultiLineString> | null {
+    // If the whole thing is already inside we can short-circuit.
+    if (booleanWithin(feat, maskPoly)) return feat;
+
+    // 1️⃣ Convert polygon ring(s) to a cutter
+    const cutter = polygonToLine(maskPoly);
+
+    // 2️⃣ Split the line wherever it meets the cutter
+    const pieces = lineSplit(feat, cutter);
+
+    // 3️⃣ Keep only the pieces that lie inside the mask
+    const kept = pieces.features.filter((ls) => {
+      const mid = along(ls, length(ls) / 2, { units: "kilometers" });
+      return booleanPointInPolygon(mid, maskPoly);
+    });
+
+    if (!kept.length) return null;
+    if (kept.length === 1) return kept[0];
+
+    return turf.multiLineString(
+      kept.map((k) => k.geometry.coordinates),
+      feat.properties
+    );
   }
 
   /** Clip a Polygon / MultiPolygon (intersection) */
   function clipPolygon(
     feat: Feature<Polygon | MultiPolygon>,
-    maskPoly: Feature<Polygon | MultiPolygon>,
+    maskPoly: Feature<Polygon | MultiPolygon>
   ): Feature<Polygon | MultiPolygon> | null {
-    const res = turf.intersect(feat, maskPoly)
-    return res ? (res as Feature<Polygon | MultiPolygon>) : null
+    const res = turf.intersect(feat, maskPoly);
+    return res ? (res as Feature<Polygon | MultiPolygon>) : null;
   }
 
-  function handleClip(): boolean {
-    const inputLayer = layers.find((l) => l.id === inputLayerId)
-    const clipLayers = layers.filter((l) => clipLayerIds.includes(l.id))
+  async function handleClip(): Promise<boolean> {
+    return new Promise((resolve) => {
+      // Use setTimeout to yield control back to React for rendering
+      setTimeout(() => {
+        try {
+          const inputLayers = layers.filter((l) =>
+            inputLayerIds.includes(l.id)
+          );
+          const clipLayer = layers.find((l) => l.id === clipLayerId);
 
-    if (!inputLayer || !clipLayers.length) return false
+          if (!inputLayers.length || !clipLayer) {
+            resolve(false);
+            return;
+          }
 
-    // —— build union mask ——
-    let mask: Feature<Polygon | MultiPolygon> | null = null
-    for (const lyr of clipLayers) {
-      turf.flattenEach(lyr.data as turf.AllGeoJSON, (f) => {
-        mask = mask ? safeUnion(mask!, f as any) : (f as any)
-      })
-    }
-    if (!mask) return false
+          // —— build union mask ——
+          let mask: Feature<Polygon | MultiPolygon> | null = null;
+          turf.flattenEach(clipLayer.data as turf.AllGeoJSON, (f) => {
+            mask = mask ? safeUnion(mask!, f as any) : (f as any);
+          });
 
-    // —— iterate input features ——
-    const out: Feature<Geometry>[] = []
-    turf.flattenEach(inputLayer.data as turf.AllGeoJSON, (f) => {
-      const t = f.geometry.type
-      let clipped: Feature<Geometry> | null = null
-      if (t === "Point" || t === "MultiPoint") {
-        clipped = clipPoints(f as any, mask!) as any
-      } else if (t === "LineString" || t === "MultiLineString") {
-        clipped = clipLine(f as any, mask!) as any
-      } else if (t === "Polygon" || t === "MultiPolygon") {
-        clipped = clipPolygon(f as any, mask!) as any
-      }
-      if (clipped) out.push({ ...clipped, properties: f.properties })
-    })
+          if (!mask) {
+            resolve(false);
+            return;
+          }
 
-    if (!out.length) return false
+          // —— process each input layer separately ——
+          let successCount = 0;
 
-    const outFC = turf.featureCollection(out)
-    const geometryType = inputLayer.geometryType
+          for (const inputLayer of inputLayers) {
+            const outputLayerSettings = outputLayers.find(
+              (ol) => ol.inputLayerId === inputLayer.id
+            );
+            if (!outputLayerSettings) continue;
 
-    addLayer(
-      {
-        data: outFC,
-        name: layerName || getUniqueLayerName("clip"),
-        id: uuidv4(),
-        visible: true,
-        fillColor,
-        fillOpacity,
-        geometryType,
-      },
-      fillColor,
-      fillOpacity,
-    )
-    return true
+            const clippedFeatures: Feature<Geometry>[] = [];
+
+            turf.flattenEach(inputLayer.data as turf.AllGeoJSON, (f) => {
+              const t = f.geometry.type;
+              let clipped: Feature<Geometry> | null = null;
+
+              if (t === "Point" || t === "MultiPoint") {
+                clipped = clipPoints(f as any, mask!) as any;
+              } else if (t === "LineString" || t === "MultiLineString") {
+                clipped = clipLine(f as any, mask!) as any;
+              } else if (t === "Polygon" || t === "MultiPolygon") {
+                clipped = clipPolygon(f as any, mask!) as any;
+              }
+
+              if (clipped) {
+                clippedFeatures.push({ ...clipped, properties: f.properties });
+              }
+            });
+
+            if (clippedFeatures.length > 0) {
+              const outFC = turf.featureCollection(clippedFeatures);
+
+              addLayer(
+                {
+                  data: outFC,
+                  name: getUniqueLayerName(outputLayerSettings.name),
+                  id: uuidv4(),
+                  visible: true,
+                  fillColor: outputLayerSettings.color,
+                  fillOpacity: outputLayerSettings.opacity,
+                  geometryType: inputLayer.geometryType,
+                },
+                outputLayerSettings.color,
+                outputLayerSettings.opacity
+              );
+              successCount++;
+            }
+          }
+
+          resolve(successCount > 0);
+        } catch (error) {
+          console.error("Error during clipping operation:", error);
+          resolve(false);
+        }
+      }, 0);
+    });
   }
 
   // ——— save handler ———
-  function onSave() {
-    const errInput = !inputLayerId
-    const errClip = !clipLayerIds.length
-    setErrors({ input: errInput, clip: errClip })
-    if (errInput || errClip) return
+  async function onSave() {
+    setIsLoading(true);
 
-    const success = handleClip()
-    if (!success) return
+    const errInput = !inputLayerIds.length;
+    const errClip = !clipLayerId;
+    setErrors({ input: errInput, clip: errClip });
 
-    onOpenChange(false)
-    setInputLayerId(null)
-    setClipLayerIds([])
-    setLayerName("")
-    setFillColor(getUniqueColor())
-    setErrors({ input: false, clip: false })
+    if (errInput || errClip) {
+      setIsLoading(false);
+      return;
+    }
+
+    const success = await handleClip();
+
+    setIsLoading(false);
+
+    if (!success) return;
+
+    // Only close dialog after loading is complete
+    onOpenChange(false);
+    resetForm();
   }
 
+  const updateOutputLayer = (
+    index: number,
+    patch: Partial<TempClippedLayer>
+  ) => {
+    setOutputLayers((prev) =>
+      prev.map((layer, i) => (i === index ? { ...layer, ...patch } : layer))
+    );
+  };
+
+  // Convert TempClippedLayer to format expected by MultipleLayerSettingsForm
+  const tempLayersForForm = outputLayers.map((ol) => ({
+    file: new File([], ol.name), // Dummy file object
+    name: ol.name,
+    color: ol.color,
+    opacity: ol.opacity,
+  }));
+
+  const handleFormChange = (
+    index: number,
+    patch: { name?: string; color?: string; opacity?: number }
+  ) => {
+    updateOutputLayer(index, patch);
+  };
+
   return (
-    <ToolDialogShell
-      open={open}
-      onOpenChange={(v) => {
-        onOpenChange(v)
-        if (!v) setErrors({ input: false, clip: false })
-      }}
-      title="Clip"
-      description="Creates a new layer by clipping an input layer (points, lines, polygons) to one or more polygon clip layers."
-      onSave={onSave}
-    >
-      <ClipTool
-        inputLayerId={inputLayerId}
-        setInputLayerId={setInputLayerId}
-        clipLayerIds={clipLayerIds}
-        setClipLayerIds={setClipLayerIds}
-        setLayerName={setLayerName}
-        errors={errors}
+    <>
+      <ToolDialogShell
+        open={open}
+        onOpenChange={(v) => {
+          onOpenChange(v);
+          if (!v) {
+            setRunSteps(false);
+            setStepIndex(0);
+            setErrors({ input: false, clip: false });
+            resetForm();
+          }
+        }}
+        title="Clip"
+        description="Clip multiple input layers using a single polygon clip layer."
+        onSave={onSave}
+        actions={bookTrigger}
+        saveButtonClassName="clip-btn"
+      >
+        <ClipTool
+          inputLayerIds={inputLayerIds}
+          setInputLayerIds={(ids) => {
+            setInputLayerIds(ids);
+            updateOutputLayers(ids);
+          }}
+          clipLayerId={clipLayerId}
+          setClipLayerId={(id) => {
+            setClipLayerId(id);
+            // Don't call updateOutputLayers here since it expects an array
+          }}
+          errors={errors}
+        />
+
+        {isLoading && (
+          <div className="flex justify-center align-center ">
+            <Bouncy color="#ff8847" size={60} />
+          </div>
+        )}
+
+        <div className="clip-styles">
+          {outputLayers.length > 0 && (
+            <div className="mt-4">
+              <h3 className="text-sm font-medium mb-2">
+                Output Layer Settings
+              </h3>
+              {outputLayers.length === 1 ? (
+                <LayerSettingsForm
+                  layerName={outputLayers[0].name}
+                  onNameChange={(name) => updateOutputLayer(0, { name })}
+                  fillColor={outputLayers[0].color}
+                  onFillColorChange={(color) => updateOutputLayer(0, { color })}
+                  fillOpacity={outputLayers[0].opacity}
+                  onFillOpacityChange={(opacity) =>
+                    updateOutputLayer(0, { opacity })
+                  }
+                />
+              ) : (
+                <MultipleLayerSettingsForm
+                  layers={tempLayersForForm}
+                  onChange={handleFormChange}
+                />
+              )}
+            </div>
+          )}
+        </div>
+      </ToolDialogShell>
+
+      <FeatureJoyride
+        steps={CLIP_STEPS}
+        run={runSteps && open}
+        onStop={handleTutorialStop}
+        stepIndex={stepIndex}
+        onStepChange={handleStepChange}
+        disableOverlay
       />
-      <LayerSettingsForm
-        layerName={layerName}
-        onNameChange={setLayerName}
-        fillColor={fillColor}
-        fillOpacity={fillOpacity}
-        onFillColorChange={setFillColor}
-        onFillOpacityChange={setFillOpacity}
-      />
-    </ToolDialogShell>
-  )
+    </>
+  );
 }
 
 // —————————————————————————————————————————— UI —————————————————————————————————
 interface ClipToolProps {
-  inputLayerId: string | null
-  setInputLayerId: (id: string | null) => void
-  clipLayerIds: string[]
-  setClipLayerIds: Dispatch<SetStateAction<string[]>>
-  setLayerName: (name: string) => void
-  errors: { input: boolean; clip: boolean }
+  inputLayerIds: string[];
+  setInputLayerIds: (ids: string[]) => void;
+  clipLayerId: string;
+  setClipLayerId: (id: string) => void;
+  errors: { input: boolean; clip: boolean };
 }
 
 function ClipTool({
-  inputLayerId,
-  setInputLayerId,
-  clipLayerIds,
-  setClipLayerIds,
-  setLayerName,
+  inputLayerIds,
+  setInputLayerIds,
+  clipLayerId,
+  setClipLayerId,
   errors,
 }: ClipToolProps): ReactElement {
-  const { layers } = useLayers()
-  const [inputOpen, setInputOpen] = useState(false)
-  const [clipOpen, setClipOpen] = useState(false)
+  const { layers } = useLayers();
+  const [inputOpen, setInputOpen] = useState(false);
+  const [clipOpen, setClipOpen] = useState(false);
 
-  const allLayers = layers // any geometry for input
+  const allLayers = layers; // any geometry for input
   const polygonLayers = layers.filter(
-    (l) => l.geometryType === "Polygon" || l.geometryType === "MultiPolygon" || l.geometryType === "FeatureCollection",
-  )
+    (l) =>
+      l.geometryType === "Polygon" ||
+      l.geometryType === "MultiPolygon" ||
+      l.geometryType === "FeatureCollection"
+  );
 
-  const selectInput = (id: string, name: string) => {
-    setInputLayerId((curr) => (curr === id ? null : id))
-    if (!name.includes("-clip")) setLayerName(getUniqueLayerName(`${name}-clip`))
-    setClipLayerIds((prev) => prev.filter((x) => x !== id))
-    setInputOpen(false)
-  }
+  const toggleInputLayer = (id: string) => {
+    const newIds = inputLayerIds.includes(id)
+      ? inputLayerIds.filter((x) => x !== id)
+      : [...inputLayerIds, id];
 
-  const toggleClipLayer = (id: string, name: string) => {
-    setClipLayerIds((prev) => {
-      const next = prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-      if (inputLayerId && !name.includes("-clip")) {
-        const inputName = layers.find((l) => l.id === inputLayerId)?.name || ""
-        setLayerName(getUniqueLayerName(`${inputName}-clip`))
-      }
-      return next
-    })
+    setInputLayerIds(newIds);
+
+    // Remove from clip layer if it was selected there
+    if (clipLayerId === id) {
+      setClipLayerId("");
+    }
     // keep open for multi-select
-  }
+  };
 
-  const inputLabel = inputLayerId ? layers.find((l) => l.id === inputLayerId)?.name ?? "Choose input layer" : "Choose input layer"
-  const clipLabel = clipLayerIds.length ? `${clipLayerIds.length} clip polygon${clipLayerIds.length > 1 ? "s" : ""}` : "Choose clip polygons"
+  const selectClipLayer = (id: string) => {
+    const newClipId = clipLayerId === id ? "" : id;
+    setClipLayerId(newClipId);
+
+    // Remove from input layers if it was selected there
+    if (newClipId) {
+      setInputLayerIds((prev) => prev.filter((x) => x !== id));
+    }
+    setClipOpen(false);
+  };
+
+  const inputLabel = inputLayerIds.length
+    ? `${inputLayerIds.length} input layer${
+        inputLayerIds.length > 1 ? "s" : ""
+      }`
+    : "Choose input layers";
+
+  const clipLabel = clipLayerId
+    ? layers.find((l) => l.id === clipLayerId)?.name || "Choose clip polygon"
+    : "Choose clip polygon";
 
   return (
     <>
-    <div className="mb-2 ml-1 mr-1 flex flex-row gap-3">
-      {/* Input layer */}
-      <Popover open={inputOpen} onOpenChange={setInputOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="default"
-            role="combobox"
-            className={cn("w-[230px] justify-between", errors.input && "border-red-500 border-2")}
+      <div className="mb-2 ml-1 mr-1 flex flex-row gap-3">
+        {/* Input layers */}
+        <Popover open={inputOpen} onOpenChange={setInputOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="default"
+              role="combobox"
+              className={cn(
+                "w-[230px] justify-between clip-input-layer",
+                errors.input && "border-red-500 border-2"
+              )}
+            >
+              {inputLabel}
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent
+            className="w-[230px] p-0"
+            aria-label="Input layer list"
           >
-            {inputLabel}
-            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-[230px] p-0" aria-label="Input layer list">
-          <Command>
-            <CommandInput placeholder="Search layer..." />
-            <CommandList>
-              <CommandEmpty>No layers found.</CommandEmpty>
-              <CommandGroup>
-                {allLayers.map((layer) => {
-                  const isChecked = inputLayerId === layer.id
-                  return (
-                    <CommandItem key={layer.id} value={layer.name} onSelect={() => selectInput(layer.id, layer.name)}>
-                      <Check className={cn("mr-2 h-4 w-4", isChecked ? "opacity-100" : "opacity-0")} />
-                      {layer.name}
-                    </CommandItem>
-                  )
-                })}
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
+            <Command>
+              <CommandInput placeholder="Search layer..." />
+              <CommandList>
+                <CommandEmpty>No layers found.</CommandEmpty>
+                <CommandGroup>
+                  {allLayers
+                    .filter((l) => l.id !== clipLayerId)
+                    .map((layer) => {
+                      const isChecked = inputLayerIds.includes(layer.id);
+                      return (
+                        <CommandItem
+                          key={layer.id}
+                          value={layer.name}
+                          onSelect={() => toggleInputLayer(layer.id)}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              isChecked ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          {layer.name}
+                        </CommandItem>
+                      );
+                    })}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
 
-      {/* Clip polygons */}
-      <Popover open={clipOpen} onOpenChange={setClipOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="default"
-            role="combobox"
-            className={cn("w-[230px] justify-between", errors.clip && "border-red-500 border-2")}
+        {/* Clip polygon */}
+        <Popover open={clipOpen} onOpenChange={setClipOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="default"
+              role="combobox"
+              className={cn(
+                "w-[230px] justify-between clip-clip-layer",
+                errors.clip && "border-red-500 border-2"
+              )}
+            >
+              {clipLabel}
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent
+            className="w-[230px] p-0"
+            aria-label="Clip polygon list"
           >
-            {clipLabel}
-            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-[230px] p-0" aria-label="Clip polygon list">
-          <Command>
-            <CommandInput placeholder="Search layer..." />
-            <CommandList>
-              <CommandEmpty>No polygon layers found.</CommandEmpty>
-              <CommandGroup>
-                {polygonLayers
-                  .filter((l) => l.id !== inputLayerId)
-                  .map((layer) => {
-                    const isChecked = clipLayerIds.includes(layer.id)
-                    return (
-                      <CommandItem key={layer.id} value={layer.name} onSelect={() => toggleClipLayer(layer.id, layer.name)}>
-                        <Check className={cn("mr-2 h-4 w-4", isChecked ? "opacity-100" : "opacity-0")} />
-                        {layer.name}
-                      </CommandItem>
-                    )
-                  })}
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
-    </div>
-    <div className="text-red-500 text-sm m-auto text-center mb-2">
-      {errors.input && errors.clip ? (
-        <p className="text-sm text-red-500">Select an input layer and at least one clip polygon layer.</p>
-      ) : errors.input ? (
-        <p className="text-sm text-red-500">Select an input layer.</p>
-      ) : errors.clip ? (
-        <p className="text-sm text-red-500">Select at least one clip polygon layer.</p>
-      ) : null}
-    </div>
+            <Command>
+              <CommandInput placeholder="Search layer..." />
+              <CommandList>
+                <CommandEmpty>No polygon layers found.</CommandEmpty>
+                <CommandGroup>
+                  {polygonLayers
+                    .filter((l) => !inputLayerIds.includes(l.id))
+                    .map((layer) => {
+                      const isSelected = clipLayerId === layer.id;
+                      return (
+                        <CommandItem
+                          key={layer.id}
+                          value={layer.name}
+                          onSelect={() => selectClipLayer(layer.id)}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              isSelected ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          {layer.name}
+                        </CommandItem>
+                      );
+                    })}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+      </div>
+      <div className="text-red-500 text-sm m-auto text-center mb-2">
+        {errors.input && errors.clip ? (
+          <p className="text-sm text-red-500">
+            Select at least one input layer and one clip polygon layer.
+          </p>
+        ) : errors.input ? (
+          <p className="text-sm text-red-500">
+            Select at least one input layer.
+          </p>
+        ) : errors.clip ? (
+          <p className="text-sm text-red-500">Select one clip polygon layer.</p>
+        ) : null}
+      </div>
     </>
-  )
+  );
 }

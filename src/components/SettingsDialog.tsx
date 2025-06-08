@@ -35,7 +35,7 @@ export default function SettingsDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>Map settings</AlertDialogTitle>
           <AlertDialogDescription>
-            Choose basemap, units, coordinate display…
+            Choose the style of the map.
           </AlertDialogDescription>
         </AlertDialogHeader>
 

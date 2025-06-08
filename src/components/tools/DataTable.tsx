@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import * as React from "react"
+import * as React from "react";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -12,18 +12,23 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
-} from "@tanstack/react-table"
-import { ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react"
-import { useState } from "react"
+} from "@tanstack/react-table";
+import {
+  ArrowUpDown,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+import { useState } from "react";
 
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -31,96 +36,98 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "@/components/ui/table";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { useAttributeTable } from "@/stores/useAttributeTable"
+} from "@/components/ui/select";
+import { useAttributeTable } from "@/stores/useAttributeTable";
 
 interface Identifiable {
-  id: string | number
+  id: string | number;
 }
 
 interface DataTableProps<TData> {
-  data: TData[]
+  data: TData[];
 }
 
 // Helper function to show values in a readable format, e.g. for objects
 function show(value: unknown): string {
-  if (Array.isArray(value))          // e.g. [{navn:"…", …}]
+  if (Array.isArray(value))
+    // e.g. [{navn:"…", …}]
     return value.map(show).join(", ");
-  if (value && typeof value === "object")
-    return JSON.stringify(value);   // any other object
+  if (value && typeof value === "object") return JSON.stringify(value); // any other object
   return value === undefined || value === null ? "" : String(value);
 }
 
-
-export function DataTable<TData extends Identifiable>({ data }: DataTableProps<TData>) {
-  const [sorting, setSorting] = React.useState<SortingState>([])
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
-  const [rowSelection, setRowSelection] = React.useState({})
-  const [columnsOpen, setColumnsOpen] = useState(false)
-  const [pageSize, setPageSize] = useState(10)
-  const [pageIndex, setPageIndex] = useState(0)
-  const setSelectedFeatures = useAttributeTable(state => state.setSelectedFeatures)
+export function DataTable<TData extends Identifiable>({
+  data,
+}: DataTableProps<TData>) {
+  const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    []
+  );
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>({});
+  const [rowSelection, setRowSelection] = React.useState({});
+  const [columnsOpen, setColumnsOpen] = useState(false);
+  const [pageSize, setPageSize] = useState(10);
+  const [pageIndex, setPageIndex] = useState(0);
+  const setSelectedFeatures = useAttributeTable(
+    (state) => state.setSelectedFeatures
+  );
 
   // Generate columns dynamically based on the data
   const columns = React.useMemo<ColumnDef<TData>[]>(() => {
-  if (!data.length) return [];
+    if (!data.length) return [];
 
-  // include *all* keys that exist in the first row except "id"
-  const propertyKeys = Object.keys(data[0]).filter(k => k !== "id");
+    // include *all* keys that exist in the first row except "id"
+    const propertyKeys = Object.keys(data[0]).filter((k) => k !== "id");
 
-  return [
-    
-    {
-      id: "select",
-      header: ({ table }) => (
-        <Checkbox
-          checked={
-            table.getIsAllRowsSelected() ||
-            (table.getIsSomeRowsSelected() && "indeterminate")
-          }
-          onCheckedChange={v => table.toggleAllRowsSelected(!!v)}
-          aria-label="Select all"
-        />
-      ),
-      cell: ({ row }) => (
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={v => row.toggleSelected(!!v)}
-          aria-label="Select row"
-        />
-      ),
-      enableSorting: false,
-      enableHiding: false,
-    },
+    return [
+      {
+        id: "select",
+        header: ({ table }) => (
+          <Checkbox
+            checked={
+              table.getIsAllRowsSelected() ||
+              (table.getIsSomeRowsSelected() && "indeterminate")
+            }
+            onCheckedChange={(v) => table.toggleAllRowsSelected(!!v)}
+            aria-label="Select all"
+          />
+        ),
+        cell: ({ row }) => (
+          <Checkbox
+            checked={row.getIsSelected()}
+            onCheckedChange={(v) => row.toggleSelected(!!v)}
+            aria-label="Select row"
+          />
+        ),
+        enableSorting: false,
+        enableHiding: false,
+      },
 
-    /* ---- (2) one column per property ---- */
-    ...propertyKeys.map((key) => ({
-      id: key,                                // <- explicit ID
-      accessorFn: (row: any) => row[key],     // <- **NO accessorKey**
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          onClick={() =>
-            column.toggleSorting(column.getIsSorted() === "asc")
-          }
-        >
-          {key}
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      ),
-      cell: ({ getValue }) => <div>{show(getValue())}</div>,
-    })),
-  ];
-}, [data]);
-
+      /* ---- (2) one column per property ---- */
+      ...propertyKeys.map((key) => ({
+        id: key, // <- explicit ID
+        accessorFn: (row: any) => row[key], // <- **NO accessorKey**
+        header: ({ column }) => (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            {key}
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        ),
+        cell: ({ getValue }) => <div>{show(getValue())}</div>,
+      })),
+    ];
+  }, [data]);
 
   const table = useReactTable({
     data,
@@ -145,26 +152,24 @@ export function DataTable<TData extends Identifiable>({ data }: DataTableProps<T
       },
     },
     onPaginationChange: (updater) => {
-      if (typeof updater === 'function') {
+      if (typeof updater === "function") {
         const newState = updater({
           pageIndex,
           pageSize,
-        })
-        setPageIndex(newState.pageIndex)
-        setPageSize(newState.pageSize)
+        });
+        setPageIndex(newState.pageIndex);
+        setPageSize(newState.pageSize);
       }
     },
-  })
+  });
 
   /* whenever the user ticks/unticks, sync IDs to Zustand */
   React.useEffect(() => {
     const ids = table
       .getSelectedRowModel()
-      .rows
-      .map(r => r.original.id.toString())   // make sure they’re strings
-    setSelectedFeatures(ids)               // ⟵ update the store
-  }, [rowSelection, setSelectedFeatures, table])
-  
+      .rows.map((r) => r.original.id.toString()); // make sure they’re strings
+    setSelectedFeatures(ids); // ⟵ update the store
+  }, [rowSelection, setSelectedFeatures, table]);
 
   return (
     <div className="h-full flex flex-col">
@@ -175,12 +180,14 @@ export function DataTable<TData extends Identifiable>({ data }: DataTableProps<T
             {table.getFilteredRowModel().rows.length} row(s) selected
           </span>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Rows per page:</span>
+            <span className="text-sm text-muted-foreground">
+              Rows per page:
+            </span>
             <Select
               value={pageSize.toString()}
               onValueChange={(value) => setPageSize(Number(value))}
             >
-              <SelectTrigger className="h-8 w-[70px]">
+              <SelectTrigger className="h-8 w-[70px] rows-per-page">
                 <SelectValue placeholder={pageSize} />
               </SelectTrigger>
               <SelectContent>
@@ -216,7 +223,11 @@ export function DataTable<TData extends Identifiable>({ data }: DataTableProps<T
           </Button>
           <DropdownMenu open={columnsOpen} onOpenChange={setColumnsOpen}>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="flex items-center gap-1">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-1"
+              >
                 Columns
                 <ChevronDown className="h-4 w-4" />
               </Button>
@@ -231,24 +242,29 @@ export function DataTable<TData extends Identifiable>({ data }: DataTableProps<T
                       key={column.id}
                       className="capitalize hover:bg-muted"
                       checked={column.getIsVisible()}
-                      onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                      onCheckedChange={(value) =>
+                        column.toggleVisibility(!!value)
+                      }
                     >
                       {column.id}
                     </DropdownMenuCheckboxItem>
-                  )
+                  );
                 })}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </div>
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto select-trondheim-checkbox scroll-table">
         <Table>
-          <TableHeader className="sticky top-0 bg-background z-10">
+          <TableHeader className="sticky top-0 bg-background z-10 select-all-checkbox">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead key={header.id} className="whitespace-nowrap text-center bg-muted/50">
+                    <TableHead
+                      key={header.id}
+                      className="whitespace-nowrap text-center bg-muted/50"
+                    >
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -256,7 +272,7 @@ export function DataTable<TData extends Identifiable>({ data }: DataTableProps<T
                             header.getContext()
                           )}
                     </TableHead>
-                  )
+                  );
                 })}
               </TableRow>
             ))}
@@ -267,10 +283,13 @@ export function DataTable<TData extends Identifiable>({ data }: DataTableProps<T
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
-                  className="hover:bg-muted/50"
+                  className="hover:bg-muted/50 extract-results"
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="whitespace-nowrap text-center">
+                    <TableCell
+                      key={cell.id}
+                      className="whitespace-nowrap text-center"
+                    >
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext()
@@ -293,5 +312,5 @@ export function DataTable<TData extends Identifiable>({ data }: DataTableProps<T
         </Table>
       </div>
     </div>
-  )
-} 
+  );
+}

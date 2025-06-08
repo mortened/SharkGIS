@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import Joyride from "react-joyride";
 
 interface LayerUploadFilesProps {
   /** All files currently selected in the dialog */
@@ -15,6 +16,7 @@ interface LayerUploadFilesProps {
   /** Called whenever the user adds (or replaces) files */
   onSelect: (files: File[]) => void;
 }
+
 
 export function LayerUploadFiles({
   selected,

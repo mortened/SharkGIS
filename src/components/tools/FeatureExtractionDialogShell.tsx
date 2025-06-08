@@ -1,3 +1,4 @@
+import { BookText } from "lucide-react"
 import {
     AlertDialog,
     AlertDialogContent,
@@ -8,6 +9,8 @@ import {
     AlertDialogAction,
     AlertDialogCancel,
 } from "../ui/alert-dialog"
+import { Button } from "../ui/button"
+import { NiceTooltip } from "./NiceToolTip"
 
 interface FeatureExtractionDialogShellProps {
     open: boolean
@@ -15,7 +18,9 @@ interface FeatureExtractionDialogShellProps {
     title: string
     onSave?: () => void
     children: React.ReactNode
-    description?: string
+    description?: string,
+    runSteps: boolean,
+    setRunSteps: (run: boolean) => void
 }
 
 export function FeatureExtractionDialogShell({
@@ -25,10 +30,12 @@ export function FeatureExtractionDialogShell({
     onSave,
     children,
     description,
+    runSteps,
+    setRunSteps
 }: FeatureExtractionDialogShellProps) {
     return (
         <AlertDialog open={open} onOpenChange={onOpenChange}>
-            <AlertDialogContent className="max-w-[1000px] w-[70vw] max-h-[90vh] overflow-hidden">
+            <AlertDialogContent className="max-w-[1000px] w-[70vw] max-h-[90vh] overflow-hidden feature-extraction">
                 <AlertDialogHeader>
                     <AlertDialogTitle>{title}</AlertDialogTitle>
                     <AlertDialogDescription>{description}</AlertDialogDescription>
@@ -37,16 +44,27 @@ export function FeatureExtractionDialogShell({
                     {children}
                 </div>
                 <AlertDialogFooter>
-                    <AlertDialogCancel onClick={() => onOpenChange(false)}>
-                        Close
-                    </AlertDialogCancel>
-                    {onSave && (
-                        <AlertDialogAction onClick={onSave}>
-                            Save
-                        </AlertDialogAction>
-                    )}
+                    <div className="flex flex-row w-full">
+                        <div className="flex-1">
+
+                                <Button onClick={() => setRunSteps(true)} variant="secondary" size="icon">
+                                    <BookText style={{ width: "1.8rem", height: "1.8rem", fill: '#ff8847' }} />
+                                </Button>
+
+                        </div>
+                        <div className="flex-3 gap-3 flex">
+                            <AlertDialogCancel onClick={() => onOpenChange(false)} className="rounded-xl">
+                                Close
+                            </AlertDialogCancel>
+                            {onSave && (
+                                <AlertDialogAction onClick={onSave} className="rounded-xl save-btn">
+                                    Save
+                                </AlertDialogAction>
+                            )}
+                        </div>
+                    </div>
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
     )
-} 
+}
