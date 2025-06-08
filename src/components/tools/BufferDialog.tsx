@@ -27,6 +27,7 @@ export function BufferDialog({ open, onOpenChange }: BufferDialogProps) {
   const [layerName, setLayerName] = useState("");
   const [fillColor, setFillColor] = useState(getUniqueColor());
   const [fillOpacity, setFillOpacity] = useState(1);
+  const [keepInputLayer, setKeepInputLayer] = useState<boolean>(true); // state for checkbox
   const [errors, setErrors] = useState<{ layer: boolean; distance: boolean }>({
     layer: false,
     distance: false,
@@ -39,7 +40,7 @@ export function BufferDialog({ open, onOpenChange }: BufferDialogProps) {
   const [runSteps, setRunSteps] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
 
-  const { layers, addLayer } = useLayers();
+  const { layers, addLayer, removeLayer } = useLayers(); // Added removeLayer
 
   /* ——————————————————————————————————————————  handlers  —————————————————————————————————————————— */
 
@@ -58,6 +59,7 @@ export function BufferDialog({ open, onOpenChange }: BufferDialogProps) {
               ? "Polygon"
               : "MultiPolygon";
 
+          // Add the new buffer layer
           addLayer(
             {
               id: uuidv4(),
@@ -71,6 +73,11 @@ export function BufferDialog({ open, onOpenChange }: BufferDialogProps) {
             fillColor,
             fillOpacity
           );
+
+          // Remove input layer if user chose not to keep it
+          if (!keepInputLayer) {
+            removeLayer(selId);
+          }
 
           resolve();
         } catch (err) {
@@ -100,10 +107,16 @@ export function BufferDialog({ open, onOpenChange }: BufferDialogProps) {
       // success → close & reset
       onOpenChange(false);
       resetForm();
+
+      // Update toast message based on whether input layer was kept or removed
+      const action = keepInputLayer
+        ? "created"
+        : "created and input layer removed";
       toastMessage({
         title: "Buffer Created",
-        description: `Buffer layer "${layerName}" created successfully.`,
+        description: `Buffer layer "${layerName}" ${action} successfully.`,
         icon: Check,
+        duration: 3500,
       });
     } catch (err) {
       console.error("Buffer operation failed:", err);
@@ -118,6 +131,7 @@ export function BufferDialog({ open, onOpenChange }: BufferDialogProps) {
     setBufferDistance(null);
     setLayerName("");
     setFillColor(getUniqueColor());
+    setKeepInputLayer(true); // Reset to default value
     setErrors({ layer: false, distance: false });
   };
 
@@ -149,6 +163,9 @@ export function BufferDialog({ open, onOpenChange }: BufferDialogProps) {
           </Button>
         }
         saveButtonClassName="buffer-btn"
+        keepInputLayer={keepInputLayer}
+        onKeepInputLayerChange={setKeepInputLayer}
+        showKeepInputLayerToggle={true}
       >
         <div className="buffer-tool">
           <BufferTool

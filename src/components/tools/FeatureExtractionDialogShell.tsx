@@ -10,6 +10,7 @@ import {
   AlertDialogCancel,
 } from "../ui/alert-dialog";
 import { Button } from "../ui/button";
+import { Checkbox } from "../ui/checkbox";
 
 interface FeatureExtractionDialogShellProps {
   open: boolean;
@@ -20,6 +21,9 @@ interface FeatureExtractionDialogShellProps {
   description?: string;
   runSteps: boolean;
   setRunSteps: (run: boolean) => void;
+  keepInputLayer?: boolean;
+  onKeepInputLayerChange?: (keep: boolean) => void;
+  showKeepInputLayerToggle?: boolean;
 }
 
 export function FeatureExtractionDialogShell({
@@ -30,6 +34,9 @@ export function FeatureExtractionDialogShell({
   children,
   description,
   setRunSteps,
+  keepInputLayer = true,
+  onKeepInputLayerChange,
+  showKeepInputLayerToggle = false,
 }: FeatureExtractionDialogShellProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -41,7 +48,7 @@ export function FeatureExtractionDialogShell({
         <div className="overflow-hidden">{children}</div>
         <AlertDialogFooter>
           <div className="flex flex-row w-full">
-            <div className="flex-1">
+            <div className="flex-1 flex items-center gap-4">
               <Button
                 onClick={() => setRunSteps(true)}
                 variant="secondary"
@@ -52,6 +59,23 @@ export function FeatureExtractionDialogShell({
                 />
               </Button>
             </div>
+            {/* Keep Input Layer Toggle */}
+            {showKeepInputLayerToggle && onKeepInputLayerChange && (
+              <div className="flex flex-1 space-x-2 items-center remove-input-feature-extract-layer">
+                <Checkbox
+                  id="keep-input-layer"
+                  checked={keepInputLayer}
+                  onCheckedChange={onKeepInputLayerChange}
+                />
+                <label
+                  htmlFor="keep-input-layer"
+                  className="text-sm font-medium leading-none cursor-pointer peer-disabled:opacity-70"
+                >
+                  Keep original layer
+                </label>
+              </div>
+            )}
+
             <div className="flex-3 gap-3 flex">
               <AlertDialogCancel
                 onClick={() => onOpenChange(false)}

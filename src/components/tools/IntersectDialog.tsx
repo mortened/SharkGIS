@@ -27,16 +27,10 @@ import {
 } from "@/components/ui/command";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn, getUniqueColor, getUniqueLayerName } from "@/lib/utils";
+import { Bouncy } from "ldrs/react";
+import "ldrs/react/Bouncy.css";
+import { toastMessage } from "../ToastMessage";
 
-/**
- * IntersectDialog — N-way polygon intersection.
- *
- * Patch 1 (2025-05-29):
- *   • FIXED: turf.intersect called with a FeatureCollection → causes "geojson is undefined".
- *     We now call `turf.intersect(featA, featB)` directly.
- *   • Added `safeIntersect` wrapper that catches errors and filters null results.
- *   • Tightened typing + ReactElement return types.
- */
 export interface IntersectDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -46,13 +40,14 @@ export function IntersectDialog({
   open,
   onOpenChange,
 }: IntersectDialogProps): ReactElement {
-  const { layers, addLayer } = useLayers();
-
+  const { layers, addLayer, removeLayer } = useLayers();
   const [selectedLayerIds, setSelectedLayerIds] = useState<string[]>([]);
   const [layerName, setLayerName] = useState<string>("");
   const [fillColor, setFillColor] = useState<string>(getUniqueColor());
   const [fillOpacity, setFillOpacity] = useState<number>(1);
   const [errors, setErrors] = useState<{ layers: boolean }>({ layers: false });
+  const [keepInputLayers, setKeepInputLayers] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   // ——— helpers ———
   function bboxesOverlap(
@@ -78,99 +73,187 @@ export function IntersectDialog({
     }
   }
 
-  function handleIntersect(layerIds: string[], outName: string): boolean {
-    const layerPolys: Feature<Polygon | MultiPolygon>[][] = layerIds.map(
-      (id) => {
-        const lyr = layers.find((l) => l.id === id);
-        if (!lyr) return [];
-        return (lyr.data.features || []).filter(
-          (f) =>
-            f.geometry.type === "Polygon" || f.geometry.type === "MultiPolygon"
-        ) as Feature<Polygon | MultiPolygon>[];
-      }
-    );
+  /** Actually performs the intersection; wrapped in setTimeout so the loader can render first */
+  async function handleIntersect(
+    layerIds: string[],
+    outName: string
+  ): Promise<boolean> {
+    return new Promise<boolean>((resolve, reject) => {
+      setTimeout(() => {
+        try {
+          const layerPolys: Feature<Polygon | MultiPolygon>[][] = layerIds.map(
+            (id) => {
+              const lyr = layers.find((l) => l.id === id);
+              if (!lyr) return [];
+              return (lyr.data.features || []).filter(
+                (f) =>
+                  f.geometry.type === "Polygon" ||
+                  f.geometry.type === "MultiPolygon"
+              ) as Feature<Polygon | MultiPolygon>[];
+            }
+          );
 
-    if (layerPolys.some((arr) => arr.length === 0)) {
-      console.warn("One or more layers have no polygon features to intersect.");
-    }
+          if (layerPolys.some((arr) => arr.length === 0)) {
+            console.warn(
+              "One or more layers have no polygon features to intersect."
+            );
+          }
 
-    let current: Feature<Polygon | MultiPolygon>[] = layerPolys[0];
+          let current: Feature<Polygon | MultiPolygon>[] = layerPolys[0];
 
-    for (let i = 1; i < layerPolys.length && current.length; i++) {
-      const nextLayer = layerPolys[i];
-      const interim: Feature<Polygon | MultiPolygon>[] = [];
-      for (const a of current) {
-        for (const b of nextLayer) {
-          if (!bboxesOverlap(a, b)) continue;
-          const inter = safeIntersect(a, b);
-          if (inter) interim.push(inter);
+          for (let i = 1; i < layerPolys.length && current.length; i++) {
+            const nextLayer = layerPolys[i];
+            const interim: Feature<Polygon | MultiPolygon>[] = [];
+            for (const a of current) {
+              for (const b of nextLayer) {
+                if (!bboxesOverlap(a, b)) continue;
+                const inter = safeIntersect(a, b);
+                if (inter) interim.push(inter);
+              }
+            }
+            current = interim;
+          }
+
+          if (!current.length) {
+            console.warn("No overlapping area found among selected layers.");
+            resolve(false);
+            return;
+          }
+
+          const outFC = turf.featureCollection(current);
+
+          // Add the new intersection layer
+          addLayer(
+            {
+              data: outFC,
+              name: outName || getUniqueLayerName("intersect"),
+              id: uuidv4(),
+              visible: true,
+              fillColor,
+              fillOpacity,
+              geometryType: "Polygon",
+            },
+            fillColor,
+            fillOpacity
+          );
+
+          // Remove input layers if user chose not to keep them
+          if (!keepInputLayers) {
+            layerIds.forEach((id) => removeLayer(id));
+          }
+
+          resolve(true);
+        } catch (err) {
+          reject(err);
         }
-      }
-      current = interim;
-    }
-
-    if (!current.length) {
-      console.warn("No overlapping area found among selected layers.");
-      return false;
-    }
-
-    const outFC = turf.featureCollection(current);
-
-    addLayer(
-      {
-        data: outFC,
-        name: outName || getUniqueLayerName("intersect"),
-        id: uuidv4(),
-        visible: true,
-        fillColor,
-        fillOpacity,
-        geometryType: "Polygon",
-      },
-      fillColor,
-      fillOpacity
-    );
-    return true;
+      }, 0); // ← yield to React
+    });
   }
 
-  function onSave() {
+  async function onSave() {
+    setIsLoading(true);
+
     if (selectedLayerIds.length < 2) {
       setErrors({ layers: true });
+      setIsLoading(false);
       return;
     }
-    const ok = handleIntersect(selectedLayerIds, layerName);
-    if (!ok) return;
-    onOpenChange(false);
+
+    try {
+      // optional micro-delay so the loader is guaranteed to appear
+      await new Promise((r) => setTimeout(r, 0));
+      const ok = await handleIntersect(selectedLayerIds, layerName);
+
+      if (!ok) {
+        toastMessage({
+          title: "Intersection Failed",
+          description: "No overlapping area found among selected layers.",
+          variant: "destructive",
+          duration: 4000,
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      // success → close & reset
+      onOpenChange(false);
+      resetForm();
+
+      // Update toast message based on whether input layers were kept or removed
+      const action = keepInputLayers
+        ? "created"
+        : "created and input layers removed";
+      toastMessage({
+        title: "Intersection Created",
+        description: `Intersection layer "${
+          layerName || getUniqueLayerName("intersect")
+        }" ${action} successfully.`,
+        icon: Check,
+        duration: 3500,
+      });
+    } catch (err) {
+      console.error("Intersection operation failed:", err);
+      toastMessage({
+        title: "Intersection Failed",
+        description: "An error occurred during the intersection operation.",
+        variant: "destructive",
+        duration: 4000,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  /** Reset everything when dialog closes */
+  const resetForm = () => {
     setSelectedLayerIds([]);
     setLayerName("");
     setFillColor(getUniqueColor());
+    setKeepInputLayers(true);
     setErrors({ layers: false });
-  }
+  };
 
   return (
     <ToolDialogShell
       open={open}
       onOpenChange={(v) => {
         onOpenChange(v);
-        if (!v) setErrors({ layers: false });
+        if (!v) {
+          resetForm();
+          setIsLoading(false);
+        }
       }}
       title="Intersect"
       description="Creates a new polygon layer from the overlapping area of the selected polygon layers."
       onSave={onSave}
+      keepInputLayer={keepInputLayers}
+      onKeepInputLayerChange={setKeepInputLayers}
+      showKeepInputLayerToggle={true}
     >
-      <IntersectTool
-        selectedLayerIds={selectedLayerIds}
-        setSelectedLayerIds={setSelectedLayerIds}
-        setLayerName={setLayerName}
-        errors={errors}
-      />
-      <LayerSettingsForm
-        layerName={layerName}
-        onNameChange={setLayerName}
-        fillColor={fillColor}
-        fillOpacity={fillOpacity}
-        onFillColorChange={setFillColor}
-        onFillOpacityChange={setFillOpacity}
-      />
+      <div className="intersect-tool">
+        <IntersectTool
+          selectedLayerIds={selectedLayerIds}
+          setSelectedLayerIds={setSelectedLayerIds}
+          setLayerName={setLayerName}
+          errors={errors}
+        />
+        <div className="intersect-form">
+          <LayerSettingsForm
+            layerName={layerName}
+            onNameChange={setLayerName}
+            fillColor={fillColor}
+            fillOpacity={fillOpacity}
+            onFillColorChange={setFillColor}
+            onFillOpacityChange={setFillOpacity}
+          />
+        </div>
+        {/* ——— loader ——— */}
+        {isLoading && (
+          <div className="flex justify-center items-center mt-4">
+            <Bouncy color="#ff8847" size={60} />
+          </div>
+        )}
+      </div>
     </ToolDialogShell>
   );
 }

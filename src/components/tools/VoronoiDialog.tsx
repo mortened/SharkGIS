@@ -23,6 +23,7 @@ import { Layer, useLayers } from "@/hooks/useLayers";
 import { Bouncy } from "ldrs/react";
 import "ldrs/react/Bouncy.css";
 import { Feature, Point } from "geojson";
+import { toastMessage } from "../ToastMessage";
 
 export interface VoronoiDialogProps {
   open: boolean;
@@ -33,7 +34,7 @@ export default function VoronoiDialog({
   open,
   onOpenChange,
 }: VoronoiDialogProps) {
-  const { layers, addLayer } = useLayers();
+  const { layers, addLayer, removeLayer } = useLayers();
   const [inputLayerId, setInputLayerId] = useState("");
   const [error, setError] = useState(false);
   const [layerName, setLayerName] = useState("");
@@ -41,6 +42,7 @@ export default function VoronoiDialog({
   const [fillColor, setFillColor] = useState<string>(getUniqueColor());
   const [inputLayerOpen, setInputLayerOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [keepInputLayers, setKeepInputLayers] = useState<boolean>(true);
 
   // Filter to only show point layers
   const pointLayers = layers.filter(
@@ -61,18 +63,62 @@ export default function VoronoiDialog({
     setInputLayerOpen(false);
   };
 
-  function onSave() {
+  async function onSave() {
     setIsLoading(true);
     const hasError = !inputLayerId;
     setError(hasError);
-    if (hasError) return;
+
+    if (hasError) {
+      setIsLoading(false);
+      return;
+    }
 
     const inputLayer = layers.find((l) => l.id === inputLayerId);
-    if (!inputLayer) return;
+    if (!inputLayer) {
+      setIsLoading(false);
+      return;
+    }
 
-    const success = handleVoronoi(inputLayer);
-    if (success) {
+    try {
+      // optional micro-delay so the loader is guaranteed to appear
+      await new Promise((r) => setTimeout(r, 0));
+      const success = await handleVoronoi(inputLayer);
+
+      if (!success) {
+        toastMessage({
+          title: "Voronoi Failed",
+          description: "Need at least 3 points to create Voronoi diagram.",
+          variant: "destructive",
+          duration: 4000,
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      // success → close & reset
       onOpenChange(false);
+
+      // Update toast message based on whether input layers were kept or removed
+      const action = keepInputLayers
+        ? "created"
+        : "created and input layer removed";
+      toastMessage({
+        title: "Voronoi Created",
+        description: `Voronoi layer "${
+          layerName || getUniqueLayerName("voronoi")
+        }" ${action} successfully.`,
+        icon: Check,
+        duration: 3500,
+      });
+    } catch (err) {
+      console.error("Voronoi operation failed:", err);
+      toastMessage({
+        title: "Voronoi Failed",
+        description: "An error occurred during the Voronoi operation.",
+        variant: "destructive",
+        duration: 4000,
+      });
+    } finally {
       setIsLoading(false);
     }
   }
@@ -87,74 +133,87 @@ export default function VoronoiDialog({
       setInputLayerOpen(false);
       setError(false);
       setIsLoading(false);
+      setKeepInputLayers(true);
     }
   }, [open]);
 
-  function handleVoronoi(inputLayer: Layer): boolean {
-    try {
-      // Extract all points from the layer
-      const points: Feature<Point>[] = [];
+  async function handleVoronoi(inputLayer: Layer): Promise<boolean> {
+    return new Promise<boolean>((resolve, reject) => {
+      setTimeout(() => {
+        try {
+          // Extract all points from the layer
+          const points: Feature<Point>[] = [];
 
-      inputLayer.data.features.forEach((feature) => {
-        if (feature.geometry.type === "Point") {
-          points.push(feature as Feature<Point>);
-        } else if (feature.geometry.type === "MultiPoint") {
-          feature.geometry.coordinates.forEach((coord) => {
-            points.push(turf.point(coord, feature.properties));
+          inputLayer.data.features.forEach((feature) => {
+            if (feature.geometry.type === "Point") {
+              points.push(feature as Feature<Point>);
+            } else if (feature.geometry.type === "MultiPoint") {
+              feature.geometry.coordinates.forEach((coord) => {
+                points.push(turf.point(coord, feature.properties));
+              });
+            }
           });
+
+          if (points.length < 3) {
+            console.error("Voronoi requires at least 3 points");
+            resolve(false);
+            return;
+          }
+
+          // Create feature collection and calculate bounding box
+          const pointsFC = turf.featureCollection(points);
+          const bbox = turf.bbox(pointsFC);
+
+          // Generate Voronoi diagram
+          const voronoiPolygons = turf.voronoi(pointsFC, { bbox: bbox });
+
+          if (!voronoiPolygons || voronoiPolygons.features.length === 0) {
+            console.error("Failed to generate Voronoi polygons");
+            resolve(false);
+            return;
+          }
+
+          // Ensure all features have valid geometry
+          const validFeatures = voronoiPolygons.features.filter(
+            (feature: Feature) => feature.geometry && feature.geometry.type
+          );
+
+          if (validFeatures.length === 0) {
+            console.error("No valid Voronoi polygons generated");
+            resolve(false);
+            return;
+          }
+
+          // Create clean feature collection with valid features
+          const cleanedVoronoi = turf.featureCollection(validFeatures);
+
+          // Add the new layer
+          addLayer(
+            {
+              id: uuidv4(),
+              name: layerName || getUniqueLayerName("voronoi"),
+              data: cleanedVoronoi,
+              fillColor,
+              fillOpacity,
+              visible: true,
+              geometryType: "Polygon",
+            },
+            fillColor,
+            fillOpacity
+          );
+
+          // Remove input layer if user chose not to keep it
+          if (!keepInputLayers) {
+            removeLayer(inputLayer.id);
+          }
+
+          resolve(true);
+        } catch (err) {
+          console.error("Error generating Voronoi diagram:", err);
+          reject(err);
         }
-      });
-
-      if (points.length < 3) {
-        console.error("Voronoi requires at least 3 points");
-        return false;
-      }
-
-      // Create feature collection and calculate bounding box
-      const pointsFC = turf.featureCollection(points);
-      const bbox = turf.bbox(pointsFC);
-
-      // Generate Voronoi diagram
-      const voronoiPolygons = turf.voronoi(pointsFC, { bbox: bbox });
-
-      if (!voronoiPolygons || voronoiPolygons.features.length === 0) {
-        console.error("Failed to generate Voronoi polygons");
-        return false;
-      }
-
-      // Ensure all features have valid geometry
-      const validFeatures = voronoiPolygons.features.filter(
-        (feature: Feature) => feature.geometry && feature.geometry.type
-      );
-
-      if (validFeatures.length === 0) {
-        console.error("No valid Voronoi polygons generated");
-        return false;
-      }
-
-      // Create clean feature collection with valid features
-      const cleanedVoronoi = turf.featureCollection(validFeatures);
-
-      // Add the new layer - match the store's 3-parameter signature
-      addLayer(
-        {
-          id: uuidv4(),
-          name: layerName || getUniqueLayerName("voronoi"),
-          data: cleanedVoronoi,
-          fillColor,
-          fillOpacity,
-          visible: true,
-          geometryType: "Polygon",
-        },
-        fillColor,
-        fillOpacity
-      );
-
-      return true;
-    } catch (err) {
-      console.error("Error generating Voronoi diagram:", err);
-      return false;
-    }
+      }, 0); // ← yield to React
+    });
   }
 
   return (
@@ -167,6 +226,9 @@ export default function VoronoiDialog({
       title="Voronoi"
       description="Creates a Voronoi polygon layer from an existing point layer."
       onSave={onSave}
+      keepInputLayer={keepInputLayers}
+      onKeepInputLayerChange={setKeepInputLayers}
+      showKeepInputLayerToggle={true}
     >
       {/* Layer picker */}
       <div className="mb-2 ml-1 mr-1 flex flex-row gap-3">
@@ -218,11 +280,6 @@ export default function VoronoiDialog({
           </PopoverContent>
         </Popover>
       </div>
-      {isLoading && (
-        <div className="flex justify-center align-center ">
-          <Bouncy color="#ff8847" size={60} />
-        </div>
-      )}
 
       {error && (
         <div className="mb-2 text-sm text-red-500">
@@ -239,6 +296,13 @@ export default function VoronoiDialog({
         onFillColorChange={setFillColor}
         onFillOpacityChange={setFillOpacity}
       />
+
+      {/* Loading animation */}
+      {isLoading && (
+        <div className="flex justify-center items-center mt-4">
+          <Bouncy color="#ff8847" size={60} />
+        </div>
+      )}
     </ToolDialogShell>
   );
 }

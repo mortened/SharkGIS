@@ -42,6 +42,8 @@ import { FeatureJoyride } from "@/tutorial/FeatureJoyride";
 import { CLIP_STEPS } from "@/tutorial/steps";
 import { Bouncy } from "ldrs/react";
 import "ldrs/react/Bouncy.css";
+import { toastMessage } from "../ToastMessage";
+
 /**
  * ClipDialog — Clips multiple *input* layers (points, lines or polygons) by one *polygon* clip layer.
  * Creates separate clipped layers for each input layer.
@@ -63,7 +65,7 @@ export function ClipDialog({
   open,
   onOpenChange,
 }: ClipDialogProps): ReactElement {
-  const { layers, addLayer } = useLayers();
+  const { layers, addLayer, removeLayer } = useLayers();
   const [runSteps, setRunSteps] = useState(false); // Whether to run the tutorial steps
   const [stepIndex, setStepIndex] = useState(0); // Track current step
   const [isLoading, setIsLoading] = useState(false);
@@ -89,6 +91,7 @@ export function ClipDialog({
   const [inputLayerIds, setInputLayerIds] = useState<string[]>([]);
   const [clipLayerId, setClipLayerId] = useState<string>("");
   const [outputLayers, setOutputLayers] = useState<TempClippedLayer[]>([]);
+  const [keepInputLayers, setKeepInputLayers] = useState<boolean>(true);
   const [errors, setErrors] = useState<{ input: boolean; clip: boolean }>({
     input: false,
     clip: false,
@@ -99,6 +102,7 @@ export function ClipDialog({
     setInputLayerIds([]);
     setClipLayerId("");
     setOutputLayers([]);
+    setKeepInputLayers(true);
     setErrors({ input: false, clip: false });
   }
 
@@ -294,6 +298,13 @@ export function ClipDialog({
             }
           }
 
+          // Remove input layers if user chose not to keep them
+          if (!keepInputLayers) {
+            inputLayerIds.forEach((id) => removeLayer(id));
+            // Also remove the clip layer if it's not being kept
+            removeLayer(clipLayerId);
+          }
+
           resolve(successCount > 0);
         } catch (error) {
           console.error("Error during clipping operation:", error);
@@ -316,15 +327,51 @@ export function ClipDialog({
       return;
     }
 
-    const success = await handleClip();
+    try {
+      // optional micro-delay so the loader is guaranteed to appear
+      await new Promise((r) => setTimeout(r, 0));
+      const success = await handleClip();
 
-    setIsLoading(false);
+      if (!success) {
+        toastMessage({
+          title: "Clip Failed",
+          description:
+            "No features were clipped. Check that your input layers overlap with the clip polygon.",
+          variant: "destructive",
+          duration: 4000,
+        });
+        setIsLoading(false);
+        return;
+      }
 
-    if (!success) return;
+      // success → close & reset
+      onOpenChange(false);
+      resetForm();
 
-    // Only close dialog after loading is complete
-    onOpenChange(false);
-    resetForm();
+      // Success toast message
+      const layerCount = outputLayers.length;
+      const action = keepInputLayers
+        ? "created"
+        : "created and input layers removed";
+      toastMessage({
+        title: "Clip Completed",
+        description: `${layerCount} clipped layer${
+          layerCount > 1 ? "s" : ""
+        } ${action} successfully.`,
+        icon: Check,
+        duration: 3500,
+      });
+    } catch (err) {
+      console.error("Clip operation failed:", err);
+      toastMessage({
+        title: "Clip Failed",
+        description: "An error occurred during the clip operation.",
+        variant: "destructive",
+        duration: 4000,
+      });
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   const updateOutputLayer = (
@@ -369,6 +416,9 @@ export function ClipDialog({
         onSave={onSave}
         actions={bookTrigger}
         saveButtonClassName="clip-btn"
+        keepInputLayer={keepInputLayers}
+        onKeepInputLayerChange={setKeepInputLayers}
+        showKeepInputLayerToggle={true}
       >
         <ClipTool
           inputLayerIds={inputLayerIds}

@@ -42,7 +42,7 @@ export function DifferenceDialog({
   open,
   onOpenChange,
 }: DifferenceDialogProps): ReactElement {
-  const { layers, addLayer } = useLayers();
+  const { layers, addLayer, removeLayer } = useLayers();
   const [runSteps, setRunSteps] = useState(false); // Whether to run the tutorial steps
   const [stepIndex, setStepIndex] = useState(0); // Track current step
   const [isLoading, setIsLoading] = useState(false); // Loading state for async operations
@@ -72,6 +72,7 @@ export function DifferenceDialog({
   const [layerName, setLayerName] = useState<string>("");
   const [fillColor, setFillColor] = useState<string>(getUniqueColor());
   const [fillOpacity, setFillOpacity] = useState<number>(1);
+  const [keepInputLayers, setKeepInputLayers] = useState<boolean>(true);
   const [errors, setErrors] = useState<{ base: boolean; subtract: boolean }>({
     base: false,
     subtract: false,
@@ -97,18 +98,42 @@ export function DifferenceDialog({
         subtractLayerIds,
         layerName
       );
-      if (!success) return;
+
+      if (!success) {
+        toastMessage({
+          title: "Difference Failed",
+          description:
+            "Unable to create difference - check that layers contain valid polygon geometry.",
+          variant: "destructive",
+          duration: 4000,
+        });
+        setIsLoading(false);
+        return;
+      }
 
       onOpenChange(false);
       resetForm();
+
+      // Update toast message based on whether input layers were kept or removed
+      const action = keepInputLayers
+        ? "created"
+        : "created and input layers removed";
       toastMessage({
         title: "Difference Created",
-        description: `Difference layer "${layerName}" created successfully.`,
+        description: `Difference layer "${
+          layerName || getUniqueLayerName("difference")
+        }" ${action} successfully.`,
         icon: Check,
+        duration: 3500,
       });
     } catch (err) {
       console.error("Difference operation failed:", err);
-      /* optional toast */
+      toastMessage({
+        title: "Difference Failed",
+        description: "An error occurred during the difference operation.",
+        variant: "destructive",
+        duration: 4000,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -121,18 +146,14 @@ export function DifferenceDialog({
     setLayerName("");
     setFillColor(getUniqueColor());
     setFillOpacity(1);
+    setKeepInputLayers(true);
     setErrors({ base: false, subtract: false });
   }
 
   useEffect(() => {
     // Reset layer selection if dialog is closed
     if (!open) {
-      setBaseLayerId(null);
-      setSubtractLayerIds([]);
-      setLayerName("");
-      setFillColor(getUniqueColor());
-      setFillOpacity(1);
-      setErrors({ base: false, subtract: false });
+      resetForm();
     }
   }, [open]);
 
@@ -224,13 +245,17 @@ export function DifferenceDialog({
               }
             );
           }
-          if (!subtractGeom) return false;
+          if (!subtractGeom) {
+            resolve(false);
+            return;
+          }
 
           // diff
           const diffGeom = safeDifference(baseGeom, subtractGeom);
           if (!diffGeom) {
             console.warn("Difference resulted in no geometry");
             resolve(false);
+            return;
           }
 
           const outFeature = turf.feature(diffGeom.geometry);
@@ -252,6 +277,15 @@ export function DifferenceDialog({
             fillColor,
             fillOpacity
           );
+
+          // Remove input layers if user chose not to keep them
+          if (!keepInputLayers) {
+            // Remove base layer
+            removeLayer(baseId);
+            // Remove subtract layers
+            subtractIds.forEach((id) => removeLayer(id));
+          }
+
           resolve(true);
         } catch (err) {
           console.error("Difference failed:", err);
@@ -277,6 +311,9 @@ export function DifferenceDialog({
         onSave={onSave}
         actions={bookTrigger}
         saveButtonClassName="difference-btn"
+        keepInputLayer={keepInputLayers}
+        onKeepInputLayerChange={setKeepInputLayers}
+        showKeepInputLayerToggle={true}
       >
         <div className="difference-tool">
           <DifferenceTool

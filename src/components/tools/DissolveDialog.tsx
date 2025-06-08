@@ -29,7 +29,7 @@ export default function DissolveDialog({
   open,
   onOpenChange,
 }: DissolveDialogProps) {
-  const { layers, addLayer } = useLayers();
+  const { layers, addLayer, removeLayer } = useLayers();
 
   const [selectedLayerId, setSelectedLayerId] = useState("");
   const [dissolveField, setDissolveField] = useState<string | null>(null);
@@ -37,6 +37,7 @@ export default function DissolveDialog({
   const [fillColor, setFillColor] = useState(getUniqueColor());
   const [fillOpacity, setFillOpacity] = useState(0.7);
   const [isLoading, setIsLoading] = useState(false);
+  const [keepInputLayers, setKeepInputLayers] = useState(true);
   const [errors, setErrors] = useState<{ layer: boolean }>({
     layer: false,
   });
@@ -64,6 +65,15 @@ export default function DissolveDialog({
     );
   }
 
+  const resetForm = () => {
+    setSelectedLayerId("");
+    setDissolveField(null);
+    setLayerName("");
+    setFillColor(getUniqueColor());
+    setKeepInputLayers(true);
+    setErrors({ layer: false });
+  };
+
   async function onSave() {
     setIsLoading(true);
 
@@ -81,29 +91,45 @@ export default function DissolveDialog({
       // Use setTimeout to yield control back to React for rendering
       await new Promise((resolve) => setTimeout(resolve, 0));
 
-      await handleDissolve(selectedLayerId, dissolveField);
+      const success = await handleDissolve(selectedLayerId, dissolveField);
+
+      if (!success) {
+        toastMessage({
+          title: "Dissolve Failed",
+          description: "No valid polygon features found to dissolve.",
+          variant: "destructive",
+          duration: 4000,
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      // Update toast message based on whether input layers were kept or removed
+      const action = keepInputLayers
+        ? "created"
+        : "created and input layer removed";
 
       toastMessage({
-        title: "Dissolve completed",
-        description: `New layer "${layerName}" created successfully!`,
+        title: "Dissolve Completed",
+        description: `Dissolved layer "${layerName}" ${action} successfully!`,
         icon: Check,
+        duration: 3500,
       });
 
       setIsLoading(false);
       onOpenChange(false);
-      setSelectedLayerId("");
-      setDissolveField(null);
-      setLayerName("");
-      setFillColor(getUniqueColor());
-      setErrors({ layer: false });
+      resetForm();
     } catch (error) {
       console.error("Dissolve operation failed:", error);
-      setIsLoading(false);
-      alert(
-        `Dissolve failed: ${
+      toastMessage({
+        title: "Dissolve Failed",
+        description: `Dissolve operation failed: ${
           error instanceof Error ? error.message : "Unknown error"
-        }`
-      );
+        }`,
+        variant: "destructive",
+        duration: 4000,
+      });
+      setIsLoading(false);
     }
   }
 
@@ -174,7 +200,7 @@ export default function DissolveDialog({
   async function handleDissolve(
     layerId: string,
     field: string | null
-  ): Promise<void> {
+  ): Promise<boolean> {
     return new Promise((resolve, reject) => {
       // Use setTimeout to yield control back to React for rendering
       setTimeout(() => {
@@ -193,9 +219,11 @@ export default function DissolveDialog({
           ) as Feature<Polygon | MultiPolygon>[];
 
           if (polygonFeatures.length === 0) {
-            throw new Error(
+            console.error(
               "No polygon or multipolygon features found in the selected layer"
             );
+            resolve(false);
+            return;
           }
 
           // Validate geometries
@@ -204,7 +232,9 @@ export default function DissolveDialog({
           );
 
           if (validFeatures.length === 0) {
-            throw new Error("No valid polygon geometries found");
+            console.error("No valid polygon geometries found");
+            resolve(false);
+            return;
           }
 
           console.log(
@@ -238,7 +268,9 @@ export default function DissolveDialog({
             }
 
             if (dissolvedFeatures.length === 0) {
-              throw new Error("No features were successfully dissolved");
+              console.error("No features were successfully dissolved");
+              resolve(false);
+              return;
             }
 
             // Add result to map
@@ -261,9 +293,11 @@ export default function DissolveDialog({
             const singleFeature = dissolveAllIntoOne(validFeatures);
 
             if (!singleFeature) {
-              throw new Error(
+              console.error(
                 "Failed to dissolve all features into single feature"
               );
+              resolve(false);
+              return;
             }
 
             // Add result to map
@@ -283,7 +317,12 @@ export default function DissolveDialog({
             addLayer(newLayer, fillColor, fillOpacity);
           }
 
-          resolve();
+          // Remove input layer if user chose not to keep it
+          if (!keepInputLayers) {
+            removeLayer(layerId);
+          }
+
+          resolve(true);
         } catch (error) {
           reject(error);
         }
@@ -476,10 +515,8 @@ export default function DissolveDialog({
         onOpenChange={(open) => {
           onOpenChange(open);
           if (!open) {
-            setSelectedLayerId("");
-            setDissolveField(null);
-            setLayerName("");
-            setErrors({ layer: false });
+            resetForm();
+            setIsLoading(false);
           }
         }}
         title="Dissolve"
@@ -491,6 +528,9 @@ export default function DissolveDialog({
         }
         actions={bookTrigger}
         saveButtonClassName="dissolve-btn"
+        keepInputLayer={keepInputLayers}
+        onKeepInputLayerChange={setKeepInputLayers}
+        showKeepInputLayerToggle={true}
       >
         <div className="dissolve-tool">
           <DissolveTool
@@ -504,7 +544,7 @@ export default function DissolveDialog({
           />
 
           {isLoading && (
-            <div className="flex justify-center align-center">
+            <div className="flex justify-center items-center mt-4">
               <Bouncy color="#ff8847" size={60} />
             </div>
           )}

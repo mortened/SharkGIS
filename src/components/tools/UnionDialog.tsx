@@ -27,15 +27,15 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Check, ChevronsUpDown } from "lucide-react";
+import { Bouncy } from "ldrs/react";
+import "ldrs/react/Bouncy.css";
+import { toastMessage } from "../ToastMessage";
 
 /**
  * UnionDialog — create a new polygon layer consisting of the geometric
  * union of two or more *polygon* input layers.
  *
- * Patch 4 (2025‑05‑21):
- *   • Fixed TypeScript error by switching to type‑only imports from
- *     **@turf/helpers** instead of non‑existent `turf.Feature` export.
- *   • No runtime behaviour changes.
+ * Enhanced with toast notifications, loading animation, and input layer management.
  */
 export interface UnionDialogProps {
   open: boolean;
@@ -43,7 +43,7 @@ export interface UnionDialogProps {
 }
 
 export function UnionDialog({ open, onOpenChange }: UnionDialogProps) {
-  const { layers, addLayer } = useLayers();
+  const { layers, addLayer, removeLayer } = useLayers();
 
   // —— form state ——
   const [selectedLayerIds, setSelectedLayerIds] = useState<string[]>([]);
@@ -51,21 +51,71 @@ export function UnionDialog({ open, onOpenChange }: UnionDialogProps) {
   const [fillColor, setFillColor] = useState<string>(getUniqueColor());
   const [fillOpacity, setFillOpacity] = useState<number>(1);
   const [errors, setErrors] = useState<{ layers: boolean }>({ layers: false });
+  const [keepInputLayers, setKeepInputLayers] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState(false);
 
-  function onSave() {
+  async function onSave() {
+    setIsLoading(true);
+
     if (selectedLayerIds.length < 2) {
       setErrors({ layers: true });
+      setIsLoading(false);
       return;
     }
-    const success = handleUnion(selectedLayerIds, layerName);
-    if (success) {
+
+    try {
+      // optional micro-delay so the loader is guaranteed to appear
+      await new Promise((r) => setTimeout(r, 0));
+      const success = await handleUnion(selectedLayerIds, layerName);
+
+      if (!success) {
+        toastMessage({
+          title: "Union Failed",
+          description:
+            "Need at least two valid polygon features to create union.",
+          variant: "destructive",
+          duration: 4000,
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      // success → close & reset
       onOpenChange(false);
-      setSelectedLayerIds([]);
-      setLayerName("");
-      setFillColor(getUniqueColor());
-      setErrors({ layers: false });
+      resetForm();
+
+      // Update toast message based on whether input layers were kept or removed
+      const action = keepInputLayers
+        ? "created"
+        : "created and input layers removed";
+      toastMessage({
+        title: "Union Created",
+        description: `Union layer "${
+          layerName || getUniqueLayerName("union")
+        }" ${action} successfully.`,
+        icon: Check,
+        duration: 3500,
+      });
+    } catch (err) {
+      console.error("Union operation failed:", err);
+      toastMessage({
+        title: "Union Failed",
+        description: "An error occurred during the union operation.",
+        duration: 4000,
+      });
+    } finally {
+      setIsLoading(false);
     }
   }
+
+  /** Reset everything when dialog closes */
+  const resetForm = () => {
+    setSelectedLayerIds([]);
+    setLayerName("");
+    setFillColor(getUniqueColor());
+    setKeepInputLayers(true);
+    setErrors({ layers: false });
+  };
 
   /** Resilient union that always returns a Polygon/MultiPolygon feature */
   function safeUnion(
@@ -98,52 +148,75 @@ export function UnionDialog({ open, onOpenChange }: UnionDialogProps) {
     return turf.multiPolygon(coords) as Feature<Polygon | MultiPolygon>;
   }
 
-  function handleUnion(layerIds: string[], outName: string): boolean {
-    const polyLayers = layers.filter((l) => layerIds.includes(l.id));
+  /** Actually performs the union; wrapped in setTimeout so the loader can render first */
+  async function handleUnion(
+    layerIds: string[],
+    outName: string
+  ): Promise<boolean> {
+    return new Promise<boolean>((resolve, reject) => {
+      setTimeout(() => {
+        try {
+          const polyLayers = layers.filter((l) => layerIds.includes(l.id));
 
-    let unionGeom: Feature<Polygon | MultiPolygon> | null = null;
-    let featureCount = 0;
+          let unionGeom: Feature<Polygon | MultiPolygon> | null = null;
+          let featureCount = 0;
 
-    for (const lyr of polyLayers) {
-      const fc = lyr.data as AllGeoJSON;
-      turf.flattenEach(
-        fc,
-        (currentFeature: Feature<Polygon | MultiPolygon>) => {
-          featureCount += 1;
-          unionGeom = unionGeom
-            ? safeUnion(unionGeom, currentFeature)
-            : currentFeature;
+          for (const lyr of polyLayers) {
+            const fc = lyr.data as AllGeoJSON;
+            turf.flattenEach(
+              fc,
+              (currentFeature: Feature<Polygon | MultiPolygon>) => {
+                featureCount += 1;
+                unionGeom = unionGeom
+                  ? safeUnion(unionGeom, currentFeature)
+                  : currentFeature;
+              }
+            );
+          }
+
+          if (!unionGeom || featureCount < 2) {
+            console.error(
+              "Union failed — need at least two valid polygon features."
+            );
+            resolve(false);
+            return;
+          }
+
+          // TypeScript: unionGeom is guaranteed to be defined here
+          const outFeature = turf.feature(
+            (unionGeom as Feature<Polygon | MultiPolygon>).geometry
+          );
+          const outFC = turf.featureCollection([outFeature]);
+          const geometryType = outFeature.geometry.type as
+            | "Polygon"
+            | "MultiPolygon";
+
+          // Add the new union layer
+          addLayer(
+            {
+              data: outFC,
+              name: outName || getUniqueLayerName("union"),
+              id: uuidv4(),
+              visible: true,
+              fillColor,
+              fillOpacity,
+              geometryType,
+            },
+            fillColor,
+            fillOpacity
+          );
+
+          // Remove input layers if user chose not to keep them
+          if (!keepInputLayers) {
+            layerIds.forEach((id) => removeLayer(id));
+          }
+
+          resolve(true);
+        } catch (err) {
+          reject(err);
         }
-      );
-    }
-
-    if (!unionGeom || featureCount < 2) {
-      console.error("Union failed — need at least two valid polygon features.");
-      setErrors({ layers: true });
-      return false;
-    }
-
-    // TypeScript: unionGeom is guaranteed to be defined here
-    const outFeature = turf.feature(
-      (unionGeom as Feature<Polygon | MultiPolygon>).geometry
-    );
-    const outFC = turf.featureCollection([outFeature]);
-    const geometryType = outFeature.geometry.type as "Polygon" | "MultiPolygon";
-
-    addLayer(
-      {
-        data: outFC,
-        name: outName || getUniqueLayerName("union"),
-        id: uuidv4(),
-        visible: true,
-        fillColor,
-        fillOpacity,
-        geometryType,
-      },
-      fillColor,
-      fillOpacity
-    );
-    return true;
+      }, 0); // ← yield to React
+    });
   }
 
   // ─── UI ────────────────────────────────────────────────────────────────
@@ -152,26 +225,42 @@ export function UnionDialog({ open, onOpenChange }: UnionDialogProps) {
       open={open}
       onOpenChange={(v) => {
         onOpenChange(v);
-        if (!v) setErrors({ layers: false });
+        if (!v) {
+          resetForm();
+          setIsLoading(false);
+        }
       }}
       title="Union"
       description="Creates a new polygon layer that is the geometric union of two or more input polygon layers."
       onSave={onSave}
+      keepInputLayer={keepInputLayers}
+      onKeepInputLayerChange={setKeepInputLayers}
+      showKeepInputLayerToggle={true}
     >
-      <UnionTool
-        selectedLayerIds={selectedLayerIds}
-        setSelectedLayerIds={setSelectedLayerIds}
-        setLayerName={setLayerName}
-        errors={errors}
-      />
-      <LayerSettingsForm
-        layerName={layerName}
-        onNameChange={setLayerName}
-        fillColor={fillColor}
-        fillOpacity={fillOpacity}
-        onFillColorChange={setFillColor}
-        onFillOpacityChange={setFillOpacity}
-      />
+      <div className="union-tool">
+        <UnionTool
+          selectedLayerIds={selectedLayerIds}
+          setSelectedLayerIds={setSelectedLayerIds}
+          setLayerName={setLayerName}
+          errors={errors}
+        />
+        <div className="union-form">
+          <LayerSettingsForm
+            layerName={layerName}
+            onNameChange={setLayerName}
+            fillColor={fillColor}
+            fillOpacity={fillOpacity}
+            onFillColorChange={setFillColor}
+            onFillOpacityChange={setFillOpacity}
+          />
+        </div>
+        {/* ——— loader ——— */}
+        {isLoading && (
+          <div className="flex justify-center items-center mt-4">
+            <Bouncy color="#ff8847" size={60} />
+          </div>
+        )}
+      </div>
     </ToolDialogShell>
   );
 }

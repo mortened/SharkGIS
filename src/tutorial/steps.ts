@@ -118,6 +118,12 @@ export const FEATURE_EXTRACTOR_STEPS_2: Step[] = [
     placement: "left",
   },
   {
+    target: ".remove-input-feature-extract-layer",
+    content: "Uncheck this box to remove the original depth layer after extraction.",
+    disableBeacon: true,
+    placement: "left",
+  },
+  {
     target: ".save-btn",
     content: "Click 'Save' to create a new layer with the extracted shallow water areas.",
     disableBeacon: true,
@@ -145,6 +151,12 @@ export const CLIP_STEPS: Step[] = [
     content: "Adjust the styles for the clipped layers. Try to set 100% opacity and a bright color for the swimming spots layer to make them stand out.",
     disableBeacon: true,
     placement: "top",
+  },
+  {
+    target: ".remove-input-layer",
+    content: "Since you will not need the original layers anymore, uncheck this box to remove them after clipping.",
+    disableBeacon: true,
+    placement: "left",
   },
   {
     target: ".clip-btn",
@@ -180,6 +192,12 @@ export const DISSOLVE_STEPS: Step[] = [
     placement: "left",
   },
   {
+    target: ".remove-input-layer",
+    content: "Uncheck this box to remove the original layer after dissolving.",
+    disableBeacon: true,
+    placement: "left",  
+  },
+  {
     target: ".dissolve-btn",
     content: "Click save to dissolve the layer. This will take a few seconds.",
     disableBeacon: true,
@@ -211,6 +229,12 @@ export const BUFFER_STEPS: Step[] = [
     content: "Name the new layer 'traffic' and make it red.",
     disableBeacon: true,
     placement: "top",
+  },
+  {
+    target: ".remove-input-layer",
+    content: "Uncheck this box to remove the original AIS layer after creating the buffer.",
+    disableBeacon: true,
+    placement: "left",
   },
   {
     target: ".buffer-btn",
