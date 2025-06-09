@@ -25,8 +25,8 @@ export const TUTORIAL_PHASES: TutorialPhase[] = [
     {
         title: "The Kayaking Mission",
         body: "You and a friend have decided to explore Trondheim's waterways by kayak. As beginners, safety is your primary concern. Your route must meet three critical requirements: stay in shallow waters in case of capsize, maintain distance to other boat/ship traffic, and padle between 2-3 accessible launch points.",
-        image: getPublicPath("/kayak.jpg"),
-        imageAlt: "Kayaking in shallow waters",
+        image: getPublicPath("/tobias-kayak.JPG"),
+        imageAlt: "Tobias kayaking",
     },
     {
         title: "Prepare Your Data",
