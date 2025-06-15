@@ -12,7 +12,7 @@ import { Button } from "../ui/button";
 import { ChevronsUpDown, ChevronDown, ChevronUp } from "lucide-react";
 import { useLayers } from "@/hooks/useLayers";
 import { AttributeTable } from "./AttributeTable";
-import { useAttributeTable } from "@/stores/useAttributeTable";
+import { useAttributeTable } from "@/hooks/useAttributeTable";
 import { FilterControls } from "./FilterControls";
 
 interface FeatureExtractionDialogProps {

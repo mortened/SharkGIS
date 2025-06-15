@@ -48,7 +48,8 @@ export default function TutorialButtons() {
       e.stopPropagation();
     },
   };
-
+  // Main book icon that changes based on whether the tutorial is open or not
+  // If the tutorial is open, show the open book icon, otherwise show the closed book icon
   const bookIcon = isOpen ? (
     <BookOpenText style={{ width: "60%", height: "60%" }} />
   ) : (
@@ -61,9 +62,10 @@ export default function TutorialButtons() {
     }
     setIsOpen(open);
   };
-
+  // Calculate progress based on the current phase, used to show the progress bar
   const progress =
     phase >= 0 ? ((phase + 1) / TUTORIAL_PHASES.length) * 100 : 0;
+  // Check if the tutorial is completed, used to style the button and show completion state
   const isCompleted = phase >= TUTORIAL_PHASES.length - 1;
 
   return (
@@ -174,7 +176,7 @@ export default function TutorialButtons() {
         </Popover>
       </NiceTooltip>
 
-      {/* ARROW NAV OUTSIDE POPUP - Your original style */}
+      {/* ARROW NAV OUTSIDE POPUP */}
       {isOpen && (
         <div className="flex gap-2">
           <NiceTooltip label="Previous step" side="bottom">

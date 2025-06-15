@@ -44,12 +44,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useAttributeTable } from "@/stores/useAttributeTable";
+import { useAttributeTable } from "@/hooks/useAttributeTable";
 
+// Define an interface for identifiable data
 interface Identifiable {
   id: string | number;
 }
 
+// Define the props for the DataTable component
 interface DataTableProps<TData> {
   data: TData[];
 }
@@ -66,6 +68,7 @@ function show(value: unknown): string {
 export function DataTable<TData extends Identifiable>({
   data,
 }: DataTableProps<TData>) {
+  // State management for table features
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
@@ -132,7 +135,7 @@ export function DataTable<TData extends Identifiable>({
       })),
     ];
   }, [data]);
-
+  // initiialize the table with the useReactTable hook
   const table = useReactTable({
     data,
     columns,
@@ -155,6 +158,7 @@ export function DataTable<TData extends Identifiable>({
         pageSize,
       },
     },
+    // Pagination settings
     onPaginationChange: (updater) => {
       if (typeof updater === "function") {
         const newState = updater({
@@ -174,7 +178,7 @@ export function DataTable<TData extends Identifiable>({
       .rows.map((r) => r.original.id.toString()); // make sure they’re strings
     setSelectedFeatures(ids); // ⟵ update the store
   }, [rowSelection, setSelectedFeatures, table]);
-
+  // ui for the DataTable component
   return (
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between p-2 border-b">

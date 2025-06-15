@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Joyride from "react-joyride";
 import { useTutorial } from "@/hooks/useTutorial";
 import { POINTERS } from "./phases";
-
+// This component displays a pointer for the current tutorial phase using Joyride, telling the user where to click next.
 export default function PhasePointer() {
   const { phase } = useTutorial();
   const pointer = POINTERS[phase];
@@ -37,7 +37,6 @@ export default function PhasePointer() {
     document.body.style.overflow = "";
   }, [run]);
 
-  /* ------------------- guard comes AFTER all hooks ------------------- */
   if (!run || !pointer) return null;
 
   return (

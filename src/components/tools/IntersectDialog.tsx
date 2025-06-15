@@ -64,6 +64,8 @@ export function IntersectDialog({
     b: Feature<Polygon | MultiPolygon>
   ): Feature<Polygon | MultiPolygon> | null {
     try {
+      // Use turf.intersect to find the intersection
+      // If the intersection is empty, it will return null
       return turf.intersect(a as any, b as any) as Feature<
         Polygon | MultiPolygon
       > | null;
@@ -81,6 +83,7 @@ export function IntersectDialog({
     return new Promise<boolean>((resolve, reject) => {
       setTimeout(() => {
         try {
+          // Validate input
           const layerPolys: Feature<Polygon | MultiPolygon>[][] = layerIds.map(
             (id) => {
               const lyr = layers.find((l) => l.id === id);
@@ -92,34 +95,39 @@ export function IntersectDialog({
               ) as Feature<Polygon | MultiPolygon>[];
             }
           );
-
+          // Filter out empty layers
           if (layerPolys.some((arr) => arr.length === 0)) {
             console.warn(
               "One or more layers have no polygon features to intersect."
             );
           }
-
+          // initialize current with the first layer's polygons
           let current: Feature<Polygon | MultiPolygon>[] = layerPolys[0];
-
+          // loop through remaining layers
           for (let i = 1; i < layerPolys.length && current.length; i++) {
+            // next layer's polygons
             const nextLayer = layerPolys[i];
             const interim: Feature<Polygon | MultiPolygon>[] = [];
+            // Check for intersections between current and next layer
             for (const a of current) {
               for (const b of nextLayer) {
+                // Skip if bounding boxes do not overlap
                 if (!bboxesOverlap(a, b)) continue;
+                // Perform intersection if bounding boxes overlap
                 const inter = safeIntersect(a, b);
+                // If intersection is valid, add to interim results
                 if (inter) interim.push(inter);
               }
             }
             current = interim;
           }
-
+          // If no intersections found, return early
           if (!current.length) {
             console.warn("No overlapping area found among selected layers.");
             resolve(false);
             return;
           }
-
+          // If we have results, create a feature collection
           const outFC = turf.featureCollection(current);
 
           // Add the new intersection layer
@@ -152,7 +160,7 @@ export function IntersectDialog({
 
   async function onSave() {
     setIsLoading(true);
-
+    // Validate input
     if (selectedLayerIds.length < 2) {
       setErrors({ layers: true });
       setIsLoading(false);
@@ -256,7 +264,6 @@ export function IntersectDialog({
   );
 }
 
-// ——————————————————————————— UI component ———————————————————————————
 interface IntersectToolProps {
   selectedLayerIds: string[];
   setSelectedLayerIds: Dispatch<SetStateAction<string[]>>;
@@ -272,7 +279,7 @@ function IntersectTool({
 }: IntersectToolProps): ReactElement {
   const { layers } = useLayers();
   const [open, setOpen] = useState(false);
-
+  // Filter layers to only include polygons and multipolygons for dropdown
   const polyLayers = layers.filter(
     (l) => l.geometryType === "Polygon" || l.geometryType === "MultiPolygon"
   );
@@ -282,7 +289,7 @@ function IntersectTool({
         selectedLayerIds.length > 1 ? "s" : ""
       } selected`
     : "Choose polygon layers";
-
+  // Toggle selected layer ID and update layer name if necessary
   const toggle = (id: string, name: string) => {
     setSelectedLayerIds((prev) => {
       const next = prev.includes(id)

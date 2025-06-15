@@ -22,19 +22,16 @@ interface LayerState {
     toggleLayer: (id: string) => void
     reorderLayers: (fromIndex: number, toIndex: number) => void
 
-    selectedLayerId: string | null;          // ① NEW
-    setSelectedLayer: (id: string | null) => void; // ② NEW
+    selectedLayerId: string | null;          
+    setSelectedLayer: (id: string | null) => void; 
 }
 
-
+// This Zustand store manages the state of layers in the map, including adding, removing, updating, and toggling visibility of layers.
 export const useLayers = create<LayerState>((set, get) => ({
     layers: [],
-    // map: null,
-    // setMap: (map) => set({ map }),
-    
     selectedLayerId: null,
-
-    setSelectedLayer: (id) => {              // ②
+    
+    setSelectedLayer: (id) => {              
         const map = useMapStore.getState().map;
         const { selectedLayerId, layers } = get();
     

@@ -22,6 +22,7 @@ import { ExportFormat, getPublicPath } from "@/lib/utils";
 import SettingsDialog from "../SettingsDialog";
 import clsx from "clsx";
 
+// function to determine the icon path based on geometry type
 const iconPath = (geom?: string) => {
   if (!geom) return "/icons/polygon.svg"; // fallback
   if (geom.startsWith("Point")) return "/icons/point.svg";
@@ -50,7 +51,7 @@ export default function LayerItem({
   const layer = layers.find((l) => l.id === id);
   const isBaseLayer = id === "base";
   const isVisible = isBaseLayer ? propIsVisible : layer?.visible ?? true;
-  console.log("Layer visibility:", { id, isVisible, layer, data: layer?.data }); // Debug log
+
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const isClickable = !isBaseLayer;
   const isSelected = id === selectedLayerId;

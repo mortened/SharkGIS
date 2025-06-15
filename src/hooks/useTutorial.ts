@@ -10,7 +10,7 @@ interface TutorialState {
   nextStep:  () => void
   reset:    () => void
 }
-
+// This Zustand store manages the state of the tutorial, including the current phase and step, and provides methods to navigate through the tutorial phases and steps.
 export const useTutorial = create<TutorialState>()(
   persist(
     (set) => ({

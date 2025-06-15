@@ -16,7 +16,7 @@ interface ToastOptions {
   backgroundColor?: string;
   textColor?: string;
 }
-
+// Customised toast message function used throughout the app, like after adding a layer, creating a buffer, etc.
 export function toastMessage({
   title,
   description,

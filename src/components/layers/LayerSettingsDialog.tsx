@@ -28,7 +28,7 @@ export function LayerSettingsDialog({
   if (!layer) {
     return null;
   }
-
+  // Initialize state with layer properties
   const [layerName, setLayerName] = useState(layer.name);
   const [fillColor, setFillColor] = useState(layer.fillColor);
   const [fillOpacity, setFillOpacity] = useState(layer.fillOpacity);

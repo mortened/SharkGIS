@@ -2,6 +2,7 @@ import { create } from "zustand"
 import type { Map } from 'mapbox-gl'
 import { useLayers } from "./useLayers"
 
+// this style is used when the basemap is hidden
 export const BLANK_STYLE = {
     version: 8,
     sources: {},
@@ -13,7 +14,7 @@ export const BLANK_STYLE = {
         }
     }]
 } as mapboxgl.Style
-
+// all styles i chose from mapbox, including the blank style
 export const BASE_STYLES = {
     streets: "mapbox://styles/mapbox/streets-v12",
     outdoors: "mapbox://styles/mapbox/outdoors-v12",
@@ -26,9 +27,10 @@ export const BASE_STYLES = {
     blueprint: "mapbox://styles/mortened/cmai5mq6e00y601qyh8e5dmrv",
     Blank: "blank",
 }
-
+// Type for the keys of BASE_STYLES
+// This type is used to ensure that the keys of BASE_STYLES are valid style names
 type StyleKey = keyof typeof BASE_STYLES
-
+// Function to derive the layer type and paint properties based on the layer's geometry type
 function getLayerTypeAndPaint(layer: {
     geometryType: string;
     fillColor: string;
@@ -44,7 +46,7 @@ function getLayerTypeAndPaint(layer: {
     } else if (layer.geometryType === 'LineString' || layer.geometryType === 'MultiLineString') {
       layerType = 'line';
     }
-  
+    // Derive the paint properties based on the layer type
     const paint: mapboxgl.AnyPaint = layerType === 'fill'
       ? {
           'fill-color': layer.fillColor,
@@ -77,12 +79,13 @@ interface MapState {
     updateMapStyle: (key: StyleKey) => void
     currentStyle: StyleKey
 }
-
+// Zustand store for managing the map state
 export const useMapStore = create<MapState>((set, get) => ({
     map: null,
     isBaseVisible: true,
     currentStyle: "dark",
     setMap: (map) => set({ map }),
+    // Toggles the visibility of the base map
     toggleBaseVisibility: async () => {
         const { map, isBaseVisible } = get()
         if (!map) return
@@ -160,6 +163,7 @@ export const useMapStore = create<MapState>((set, get) => ({
 
         set({ isBaseVisible: newVisibility })
     },
+    // Updates the map layers based on the current state of layers
     updateMapLayers: () => {
         const { map } = get();
         const layers = useLayers.getState().layers;
@@ -218,7 +222,7 @@ export const useMapStore = create<MapState>((set, get) => ({
           });
         });
       },
-      
+    // Updates the map style based on the selected key
     updateMapStyle: (key: StyleKey) => {
         const { map, isBaseVisible } = get()
         if (!map) return

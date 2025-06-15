@@ -12,7 +12,8 @@ export interface Pointer {
   content: string;
   placement?: "left" | "right" | "top" | "bottom";
 }
-
+// The tutorial phases provide a structured guide through the SharkGIS application, focusing on a kayak route planning scenario in Trondheim's waterways.
+// It is meant as the 'main' tutorial, while steps in the tools are more like 'mini-tutorials' that can be accessed at any time.
 export const TUTORIAL_PHASES: TutorialPhase[] = [
     {
         title: "Welcome to SharkGIS",
@@ -85,7 +86,7 @@ export const TUTORIAL_PHASES: TutorialPhase[] = [
     },
 ];
 
-// Updated pointers with cleaner guidance
+// The pointers help users know where to click next, and are linked to a tuturial phase.
 export const POINTERS: Record<number, Pointer> = {
     4: {
         target: ".upload-btn",

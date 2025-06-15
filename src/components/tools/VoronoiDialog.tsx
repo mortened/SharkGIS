@@ -48,11 +48,11 @@ export default function VoronoiDialog({
   const pointLayers = layers.filter(
     (l) => l.geometryType === "Point" || l.geometryType === "MultiPoint"
   );
-
+  // Label for the input layer button
   const inputLabel = inputLayerId
     ? layers.find((l) => l.id === inputLayerId)?.name ?? "Choose input layer"
     : "Choose input layer";
-
+  // sets correct id and gives unique name for the Voronoi layer
   const selectInputLayer = (id: string, name: string) => {
     setInputLayerId(id);
     if (name.includes("-voronoi")) {
@@ -62,18 +62,20 @@ export default function VoronoiDialog({
     }
     setInputLayerOpen(false);
   };
-
+  // async function to handle saving the Voronoi layer
   async function onSave() {
+    // Validate input layer selection and starts loading
     setIsLoading(true);
     const hasError = !inputLayerId;
     setError(hasError);
-
+    // If there's an error, stop loading and return
     if (hasError) {
       setIsLoading(false);
       return;
     }
-
+    // Find the selected input layer
     const inputLayer = layers.find((l) => l.id === inputLayerId);
+    // If no input layer is found, stop loading and return
     if (!inputLayer) {
       setIsLoading(false);
       return;
@@ -82,8 +84,9 @@ export default function VoronoiDialog({
     try {
       // optional micro-delay so the loader is guaranteed to appear
       await new Promise((r) => setTimeout(r, 0));
+      // Call the Voronoi handler function, and wait for it to complete
       const success = await handleVoronoi(inputLayer);
-
+      // If Voronoi operation failed (e.g., not enough points), show error toast
       if (!success) {
         toastMessage({
           title: "Voronoi Failed",
@@ -134,14 +137,14 @@ export default function VoronoiDialog({
       setKeepInputLayers(true);
     }
   }, [open]);
-
+  // Function to handle Voronoi diagram generation
   async function handleVoronoi(inputLayer: Layer): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
       setTimeout(() => {
         try {
           // Extract all points from the layer
           const points: Feature<Point>[] = [];
-
+          // Check if the input layer has point or multipoint features
           inputLayer.data.features.forEach((feature) => {
             if (feature.geometry.type === "Point") {
               points.push(feature as Feature<Point>);
@@ -151,7 +154,7 @@ export default function VoronoiDialog({
               });
             }
           });
-
+          // if not enough points, log error and resolve with false
           if (points.length < 3) {
             console.error("Voronoi requires at least 3 points");
             resolve(false);

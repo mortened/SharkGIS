@@ -1,6 +1,6 @@
-import { useState } from "react"
-import { Button } from "../ui/button"
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover"
+import { useState } from "react";
+import { Button } from "../ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import {
   Command,
   CommandGroup,
@@ -8,19 +8,19 @@ import {
   CommandInput,
   CommandList,
   CommandEmpty,
-} from "@/components/ui/command"
-import { Input } from "../ui/input"
-import { Check, ChevronsUpDown } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { useLayers } from "@/hooks/useLayers"
+} from "@/components/ui/command";
+import { Input } from "../ui/input";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useLayers } from "@/hooks/useLayers";
 
 interface IntersectToolProps {
-  selectedFirstLayerId: string
-  setSelectedFirstLayerId: (id: string) => void
-  selectedSecondLayerId: string
-  setSelectedSecondLayerId: (id: string) => void
-  layerName: string
-  setLayerName: (name: string) => void
+  selectedFirstLayerId: string;
+  setSelectedFirstLayerId: (id: string) => void;
+  selectedSecondLayerId: string;
+  setSelectedSecondLayerId: (id: string) => void;
+  layerName: string;
+  setLayerName: (name: string) => void;
 }
 
 export default function IntersectTool({
@@ -31,17 +31,25 @@ export default function IntersectTool({
   layerName,
   setLayerName,
 }: IntersectToolProps) {
-  const { layers } = useLayers()
+  const { layers } = useLayers();
 
   // Separate states for the two popovers:
-  const [openFirst, setOpenFirst] = useState(false)
-  const [openSecond, setOpenSecond] = useState(false)
-
-  const selectedFirstLayer = layers.find((layer) => layer.id === selectedFirstLayerId)
-  const selectedSecondLayer = layers.find((layer) => layer.id === selectedSecondLayerId)
-
-  const firstButtonLabel = selectedFirstLayer ? selectedFirstLayer.name : "Choose first layer"
-  const secondButtonLabel = selectedSecondLayer ? selectedSecondLayer.name : "Choose second layer"
+  const [openFirst, setOpenFirst] = useState(false);
+  const [openSecond, setOpenSecond] = useState(false);
+  // State for selected layers
+  const selectedFirstLayer = layers.find(
+    (layer) => layer.id === selectedFirstLayerId
+  );
+  const selectedSecondLayer = layers.find(
+    (layer) => layer.id === selectedSecondLayerId
+  );
+  // State for label names
+  const firstButtonLabel = selectedFirstLayer
+    ? selectedFirstLayer.name
+    : "Choose first layer";
+  const secondButtonLabel = selectedSecondLayer
+    ? selectedSecondLayer.name
+    : "Choose second layer";
 
   return (
     <div className="space-y-4">
@@ -69,15 +77,17 @@ export default function IntersectTool({
                     key={layer.id}
                     value={layer.name}
                     onSelect={() => {
-                      setSelectedFirstLayerId(layer.id)
-                      setLayerName(layer.name + "-intersect")
-                      setOpenFirst(false)
+                      setSelectedFirstLayerId(layer.id);
+                      setLayerName(layer.name + "-intersect");
+                      setOpenFirst(false);
                     }}
                   >
                     <Check
                       className={cn(
                         "mr-2 h-4 w-4",
-                        layer.id === selectedFirstLayerId ? "opacity-100" : "opacity-0"
+                        layer.id === selectedFirstLayerId
+                          ? "opacity-100"
+                          : "opacity-0"
                       )}
                     />
                     {layer.name}
@@ -113,15 +123,17 @@ export default function IntersectTool({
                     key={layer.id}
                     value={layer.name}
                     onSelect={() => {
-                      setSelectedSecondLayerId(layer.id)
-                      setLayerName(layer.name + "-intersect")
-                      setOpenSecond(false)
+                      setSelectedSecondLayerId(layer.id);
+                      setLayerName(layer.name + "-intersect");
+                      setOpenSecond(false);
                     }}
                   >
                     <Check
                       className={cn(
                         "mr-2 h-4 w-4",
-                        layer.id === selectedSecondLayerId ? "opacity-100" : "opacity-0"
+                        layer.id === selectedSecondLayerId
+                          ? "opacity-100"
+                          : "opacity-0"
                       )}
                     />
                     {layer.name}
@@ -141,5 +153,5 @@ export default function IntersectTool({
         onChange={(e) => setLayerName(e.target.value)}
       />
     </div>
-  )
+  );
 }

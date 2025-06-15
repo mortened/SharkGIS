@@ -32,7 +32,7 @@ export function getUniqueLayerName(name: string) {
   return uniqueName;
 }
 
-
+// predefined color palette for layers
 const PALETTE = [
   "#e6194b", "#3cb44b", "#ffe119", "#4363d8", "#f58231",
   "#911eb4", "#46f0f0", "#f032e6", "#bcf60c", "#fabebe",
@@ -54,7 +54,7 @@ export function getUniqueColor(extraUsed: string[] = []): string {
   } while (used.has(rnd));
   return rnd;
 }
-
+// This function returns the icon path based on the geometry type
 export const iconForGeometry = (geom: string): string => {
   switch (geom) {
     case "Point":
@@ -68,7 +68,6 @@ export const iconForGeometry = (geom: string): string => {
   }
 };
 
-
 export function featureKey(f: Feature, idx: number): string {
   return (
     f.id?.toString() ??
@@ -77,5 +76,5 @@ export function featureKey(f: Feature, idx: number): string {
     idx.toString()
   );
 }
-
+// This type defines the possible export formats 
 export type ExportFormat = "geojson" | "gpx" | "png";

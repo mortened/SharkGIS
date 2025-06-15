@@ -36,7 +36,7 @@ export function LayerUploadDialog({
 }: LayerUploadDialogProps) {
   const [, setLayerName] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  //   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+
   const [, setFillColor] = useState(getUniqueColor());
   const [, setFillOpacity] = useState(0.8);
   const { addLayer } = useLayers();
@@ -53,7 +53,7 @@ export function LayerUploadDialog({
       setLayerName(uniqueName);
     }
   }, [selectedFile]);
-
+  // Reset form when dialog opens
   function resetForm() {
     setLayerName("");
     setSelectedFile(null);
@@ -61,54 +61,6 @@ export function LayerUploadDialog({
     setFillOpacity(0.8);
     setPending([]);
   }
-
-  //   const handleAddLayer = async () => {
-  //     if (selectedFile && layerName) {
-  //       try {
-  //         const fileContents = await selectedFile.text();
-  //         const geoJsonData = JSON.parse(fileContents);
-
-  //         addLayer(
-  //           {
-  //             data: geoJsonData,
-  //             name: getUniqueLayerName(layerName),
-  //             id: uuidv4(),
-  //             visible: true,
-  //             fillColor: fillColor,
-  //             fillOpacity: fillOpacity,
-  //             geometryType: geoJsonData.features[0].geometry.type as
-  //               | "Point"
-  //               | "LineString"
-  //               | "Polygon"
-  //               | "MultiPoint"
-  //               | "MultiLineString"
-  //               | "MultiPolygon",
-  //           },
-  //           fillColor,
-  //           fillOpacity
-  //         );
-
-  //         toastMessage({
-  //           title: "Layer added successfully",
-  //           description: `${layerName} was added to the map`,
-  //           icon: BadgeCheck,
-  //         });
-
-  //         onOpenChange(false);
-  //         setLayerName("");
-  //         setSelectedFile(null);
-  //         setFillColor(getUniqueColor());
-  //         setFillOpacity(0.8);
-  //       } catch (error) {
-  //         console.error("Error reading file:", error);
-  //         toastMessage({
-  //           title: "Error",
-  //           description: `Error reading file. Please make sure it is valid GeoJSON.`,
-  //           icon: Cross,
-  //         });
-  //       }
-  //     }
-  //   };
 
   /* ---------- when user selects files ---------- */
   const handleFilesSelect = (files: File[]) => {
@@ -118,7 +70,7 @@ export function LayerUploadDialog({
     const newPending: TempLayer[] = files.map((file) => {
       const color = getUniqueColor([...taken]);
       taken.add(color);
-
+      // Create a temporary layer object
       return {
         file,
         name: getUniqueLayerName(file.name.replace(/\.geojson$/i, "")),
@@ -173,9 +125,8 @@ export function LayerUploadDialog({
 
   function handleTutorialStop() {
     setRunSteps(false);
-    // Reset stepIndex to 0 if you want to start from the beginning next time
   }
-
+  // Handle step change in the tutorial
   function handleStepChange(newStepIndex: number) {
     setStepIndex(Math.max(0, Math.min(newStepIndex, UPLOADSTEPS.length - 1)));
   }

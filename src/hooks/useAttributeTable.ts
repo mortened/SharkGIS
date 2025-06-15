@@ -19,13 +19,13 @@ interface AttributeTableState {
   clearFilters: () => void
   setSelectedFeatures: (ids: string[]) => void
 }
-
+// This Zustand store manages the state of the attribute table, including selected layer, filter conditions, and selected features.
 export const useAttributeTable = create<AttributeTableState>((set) => ({
   selectedLayerId: null,
   filterConditions: [],
   filteredFeatures: [],
   selectedFeatures: [],
-
+  
   setSelectedLayerId: (id) => set({ selectedLayerId: id }),
   
   addFilterCondition: (condition) => 

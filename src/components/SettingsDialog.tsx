@@ -17,7 +17,8 @@ interface SettingsDialogProps {
   onOpenChange: (open: boolean) => void;
   onSave?: () => void;
 }
-
+// This dialog allows users to change map style settings
+// It includes a style switcher component and save/close buttons
 export default function SettingsDialog({
   open,
   onOpenChange,

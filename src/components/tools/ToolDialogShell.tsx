@@ -10,7 +10,8 @@ import {
 } from "../ui/alert-dialog";
 import { Button } from "../ui/button";
 import { Checkbox } from "../ui/checkbox";
-
+// custom reusable dialog shell for tools
+// This shell is used for various tools like Buffer, Intersect, Union, etc.
 interface ToolDialogShellProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;

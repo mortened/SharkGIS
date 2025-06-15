@@ -12,6 +12,8 @@ import {
 import { Button } from "../ui/button";
 import { Checkbox } from "../ui/checkbox";
 
+// custom shell for feature extraction dialog
+
 interface FeatureExtractionDialogShellProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;

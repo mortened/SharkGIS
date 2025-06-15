@@ -45,7 +45,7 @@ export default function DissolveDialog({
   // Joyride state
   const [runSteps, setRunSteps] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
-
+  // Trigger button for the tutorial
   const bookTrigger = (
     <Button onClick={() => setRunSteps(true)} variant="secondary" size="icon">
       <BookText
@@ -53,18 +53,18 @@ export default function DissolveDialog({
       />
     </Button>
   );
-
+  // Handler to stop the tutorial
   function handleTutorialStop() {
     setRunSteps(false);
     setStepIndex(0);
   }
-
+  // Handler to change the step index
   function handleStepChange(newStepIndex: number) {
     setStepIndex(
       Math.max(0, Math.min(newStepIndex, DISSOLVE_STEPS.length - 1))
     );
   }
-
+  // Reset form state
   const resetForm = () => {
     setSelectedLayerId("");
     setDissolveField(null);
@@ -73,10 +73,10 @@ export default function DissolveDialog({
     setKeepInputLayers(true);
     setErrors({ layer: false });
   };
-
+  // async function to handle saving the dissolve operation
   async function onSave() {
     setIsLoading(true);
-
+    // Validate inputs
     const hasLayer = !!selectedLayerId;
 
     if (!hasLayer) {
@@ -86,13 +86,13 @@ export default function DissolveDialog({
       setIsLoading(false);
       return;
     }
-
+    // wrap the dissolve operation in a try-catch block
     try {
       // Use setTimeout to yield control back to React for rendering
       await new Promise((resolve) => setTimeout(resolve, 0));
 
       const success = await handleDissolve(selectedLayerId, dissolveField);
-
+      // if not successful, show error toast and reset loading state
       if (!success) {
         toastMessage({
           title: "Dissolve Failed",
@@ -130,7 +130,7 @@ export default function DissolveDialog({
       setIsLoading(false);
     }
   }
-
+  // Function to validate polygon and multipolygon geometries
   function validateGeometry(feature: Feature<Polygon | MultiPolygon>): boolean {
     try {
       if (!feature.geometry || !feature.geometry.coordinates) {
@@ -194,7 +194,7 @@ export default function DissolveDialog({
       return false;
     }
   }
-
+  // Function to handle the dissolve operation
   async function handleDissolve(
     layerId: string,
     field: string | null
@@ -215,7 +215,7 @@ export default function DissolveDialog({
               (f.geometry.type === "Polygon" ||
                 f.geometry.type === "MultiPolygon")
           ) as Feature<Polygon | MultiPolygon>[];
-
+          // If no polygon features found, resolve with false
           if (polygonFeatures.length === 0) {
             console.error(
               "No polygon or multipolygon features found in the selected layer"
@@ -228,22 +228,22 @@ export default function DissolveDialog({
           const validFeatures = polygonFeatures.filter((f) =>
             validateGeometry(f)
           );
-
+          // If no valid features found, resolve with false
           if (validFeatures.length === 0) {
             console.error("No valid polygon geometries found");
             resolve(false);
             return;
           }
-
+          // Log the number of valid features found
           console.log(
             `Found ${validFeatures.length} valid features out of ${polygonFeatures.length} total polygon features`
           );
-
+          // If a dissolve field is specified, group by that field
           if (field) {
             // Dissolve by field - create ONE feature for each unique attribute value
             const groups: Record<string, Feature<Polygon | MultiPolygon>[]> =
               {};
-
+            // Group features by the specified field
             validFeatures.forEach((f) => {
               const value = f.properties?.[field];
               const key =
@@ -255,23 +255,23 @@ export default function DissolveDialog({
               }
               groups[key].push(f);
             });
-
+            // initialize an array to hold dissolved features
             const dissolvedFeatures: Feature<Polygon | MultiPolygon>[] = [];
-
+            // Iterate over each group and dissolve the features
             for (const [key, feats] of Object.entries(groups)) {
               const dissolvedFeature = dissolveGroup(feats, field, key);
               if (dissolvedFeature) {
                 dissolvedFeatures.push(dissolvedFeature);
               }
             }
-
+            // If no features were dissolved, log an error and resolve with false
             if (dissolvedFeatures.length === 0) {
               console.error("No features were successfully dissolved");
               resolve(false);
               return;
             }
 
-            // Add result to map
+            // create a new layer with the dissolved features
             const newLayer = {
               id: uuidv4(),
               name: layerName,
@@ -284,12 +284,12 @@ export default function DissolveDialog({
               visible: true,
               geometryType: "Polygon" as const,
             };
-
+            // Add the new layer to the map
             addLayer(newLayer, fillColor, fillOpacity);
           } else {
             // No field - dissolve ALL into ONE feature
             const singleFeature = dissolveAllIntoOne(validFeatures);
-
+            // If no single feature was created, log an error and resolve with false
             if (!singleFeature) {
               console.error(
                 "Failed to dissolve all features into single feature"
@@ -327,7 +327,7 @@ export default function DissolveDialog({
       }, 0);
     });
   }
-
+  // Function to dissolve a group of features based on a field
   function dissolveGroup(
     feats: Feature<Polygon | MultiPolygon>[],
     field: string,
@@ -414,7 +414,7 @@ export default function DissolveDialog({
       return null;
     }
   }
-
+  // Function to dissolve all features into one, removing internal boundaries
   function dissolveAllIntoOne(
     features: Feature<Polygon | MultiPolygon>[]
   ): Feature<Polygon | MultiPolygon> | null {

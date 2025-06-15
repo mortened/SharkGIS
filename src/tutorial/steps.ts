@@ -1,5 +1,6 @@
 import { Step } from "react-joyride"
-
+// This file contains the tutorial steps for various tools and features in the application.
+// They are used to guide users through the functionalities of the application, such as uploading layers, extracting features, clipping layers, dissolving features, buffering, and creating differences between layers.
 export const STEPS: Record<number, Step[]> = {
   3: [
     {

@@ -10,7 +10,7 @@ interface FeatureJoyrideProps {
   stepIndex?: number;
   onStepChange?: (stepIndex: number) => void;
 }
-
+// FeatureJoyride component renders a Joyride tour inside tool dialogs etc used in the main tutorial.
 export function FeatureJoyride({
   steps,
   run,

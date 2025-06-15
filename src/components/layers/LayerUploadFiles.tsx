@@ -25,10 +25,10 @@ export function LayerUploadFiles({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   /* ---------- helpers ---------- */
-
+  /** Check if a file is a valid GeoJSON file */
   const isGeoJson = (f: File) =>
     f.type === "application/json" || f.name.toLowerCase().endsWith(".geojson");
-
+  /** Read files from the input or drag-and-drop */
   const readFiles = (fileList: FileList) => {
     const goodFiles = Array.from(fileList).filter(isGeoJson);
     if (goodFiles.length) {
@@ -40,24 +40,24 @@ export function LayerUploadFiles({
   };
 
   /* ---------- event handlers ---------- */
-
+  /** Handle drag events to toggle the active state */
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(e.type === "dragenter" || e.type === "dragover");
   };
-
+  /** Handle drop event to read files */
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
     if (e.dataTransfer.files) readFiles(e.dataTransfer.files);
   };
-
+  /** Handle file input change event */
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) readFiles(e.target.files);
   };
-
+  /** Handle deletion of a file from the list */
   const handleDelete = (file: File) => {
     const newFiles = selected.filter((f) => f.name !== file.name);
     onSelect(newFiles);
@@ -104,7 +104,6 @@ export function LayerUploadFiles({
         {selected.length > 0 && (
           <ul className="text-sm text-gray-600 space-y-0.5 text-center">
             {selected.map((file) => (
-              //   <li key={file.name}>{file.name}</li>
               //   Delete file with red cross icon
               <li key={file.name} className="flex justify-between">
                 <span>{file.name}</span>

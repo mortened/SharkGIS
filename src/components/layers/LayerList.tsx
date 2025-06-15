@@ -22,15 +22,15 @@ export default function LayerList() {
     const layer = layers.find((l) => l.id === layerId);
     if (!layer) return;
 
-    // 1️⃣  Build a GeoJSON FeatureCollection (works for any geometry)
+    // Build a GeoJSON FeatureCollection (works for any geometry)
     const geojson: GeoJSON.FeatureCollection = {
       type: "FeatureCollection",
       features: layer.data.features,
     };
-
+    // Create the Blob based on the format
     let blob: Blob;
     let filenameBase = layer.name.replace(/[^a-z0-9]/gi, "_");
-
+    // different formats require different handling
     switch (format) {
       case "geojson":
         blob = new Blob([JSON.stringify(geojson, null, 2)], {
@@ -38,7 +38,7 @@ export default function LayerList() {
         });
         filenameBase += ".geojson";
         break;
-
+      // GPX requires XML serialization
       case "gpx": {
         const doc = GeoJsonToGpx(geojson, { creator: "SharkGIS" });
         const gpxString = new XMLSerializer().serializeToString(doc);
@@ -46,7 +46,7 @@ export default function LayerList() {
         filenameBase += ".gpx";
         break;
       }
-
+      // PNG requires a Mapbox GL map instance
       case "png": {
         const map = useMapStore.getState().map;
         if (!map) return;
@@ -65,8 +65,8 @@ export default function LayerList() {
         return; // nothing to do
     }
 
-    // 2️⃣  Trigger the download – anchor-hack or FileSaver
-    saveAs(blob, filenameBase); // or use an <a download=""> as you already do
+    //   Trigger the download – anchor-hack or FileSaver
+    saveAs(blob, filenameBase);
   };
 
   // Toggle the base layer
@@ -84,7 +84,7 @@ export default function LayerList() {
     event.currentTarget.classList.add("opacity-60");
     setIsDraggedIndex(storeIndex);
   };
-
+  // Handle drag over to highlight the drop target
   const handleDragOver = (
     event: React.DragEvent<HTMLDivElement>,
     storeIndex: number
@@ -94,13 +94,13 @@ export default function LayerList() {
       setIsDraggedOverIndex(storeIndex);
     }
   };
-
+  // Handle drag end to reset styles
   const handleDragEnd = (event: React.DragEvent<HTMLDivElement>) => {
     event.currentTarget.classList.remove("opacity-60");
     setIsDraggedIndex(null);
     setIsDraggedOverIndex(null);
   };
-
+  // Handle drop to reorder layers
   const handleDrop = (
     event: React.DragEvent<HTMLDivElement>,
     storeIndex: number

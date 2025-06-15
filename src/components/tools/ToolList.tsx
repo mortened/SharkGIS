@@ -9,7 +9,7 @@ import { IntersectDialog } from "./IntersectDialog";
 import { DifferenceDialog } from "./DifferenceDialog";
 import { ClipDialog } from "./ClipDialog";
 import VoronoiDialog from "./VoronoiDialog";
-
+// List of all tools in the sidebar, with their names and icons
 const tools = [
   { name: "Buffer", icon: "buffer" },
   { name: "Intersect", icon: "intersect" },
@@ -19,13 +19,12 @@ const tools = [
   { name: "Clip", icon: "clip" },
   { name: "Voronoi", icon: "voronoi" },
   { name: "Feature extraction", icon: "filter" },
-  // Add other tools here
 ];
 
 export default function ToolList() {
   const [activeTool, setActiveTool] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-
+  // Function to open the dialog for a specific tool
   function openToolDialog(toolName: string) {
     setActiveTool(toolName);
     setIsDialogOpen(true);
@@ -33,6 +32,7 @@ export default function ToolList() {
 
   return (
     <div className="flex flex-col">
+      {/* maps through the tools array and creates a button for each tool with corresponding icon, name and click handler */}
       {tools.map((item) => (
         <Button
           key={item.name}

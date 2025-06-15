@@ -1,7 +1,12 @@
 // components/NiceTooltip.tsx
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+  TooltipProvider,
+} from "@/components/ui/tooltip";
 import { TooltipArrow } from "@radix-ui/react-tooltip";
-
+// This component provides a styled tooltip
 export function NiceTooltip({
   children,
   label,

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { FeatureExtractionDialogShell } from "./FeatureExtractionDialogShell";
 import FeatureExtractionTool from "./FeatureExtractionTool";
-import { useAttributeTable } from "@/stores/useAttributeTable";
+import { useAttributeTable } from "@/hooks/useAttributeTable";
 import { useLayers } from "@/hooks/useLayers";
 import type { FeatureCollection } from "geojson";
 import { featureKey, getUniqueColor, getUniqueLayerName } from "@/lib/utils";
@@ -35,13 +35,14 @@ export function FeatureExtractionDialog({
   const { phase } = useTutorial();
 
   async function onSave() {
+    // Validate selected layer and start loading immidiately when the user clicks save
     setLoading(true);
     const selectedLayer = layers.find((layer) => layer.id === selectedLayerId);
     if (!selectedLayer) {
       setLoading(false);
       return;
     }
-
+    // wrapped in a try-catch to handle errors
     try {
       // Optional micro-delay so the loader is guaranteed to appear
       await new Promise((r) => setTimeout(r, 0));
@@ -112,7 +113,7 @@ export function FeatureExtractionDialog({
         icon: Check,
         duration: 3500,
       });
-
+      // Clear filters after extraction
       clearFilters();
     } catch (err) {
       console.error("Feature extraction failed:", err);

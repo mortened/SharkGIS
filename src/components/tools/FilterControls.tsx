@@ -1,50 +1,62 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Input } from "@/components/ui/input"
-import { useAttributeTable } from "@/stores/useAttributeTable"
-import { useLayers } from "@/hooks/useLayers"
-import { X } from "lucide-react"
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { useAttributeTable } from "@/hooks/useAttributeTable";
+import { useLayers } from "@/hooks/useLayers";
+import { X } from "lucide-react";
 
+// FilterControls component allows users to add and manage filter conditions for the attribute table.
 export function FilterControls() {
-  const { layers } = useLayers()
-  const { selectedLayerId, filterConditions, addFilterCondition, removeFilterCondition } = useAttributeTable()
-  
-  const selectedLayer = layers.find(layer => layer.id === selectedLayerId)
-  const properties = selectedLayer?.data.features[0]?.properties || {}
-  
-  const [selectedField, setSelectedField] = useState("")
-  const [selectedOperator, setSelectedOperator] = useState<"=" | "!=" | ">" | "<" | ">=" | "<=">("=")
-  const [filterValue, setFilterValue] = useState("")
-
+  const { layers } = useLayers();
+  const {
+    selectedLayerId,
+    filterConditions,
+    addFilterCondition,
+    removeFilterCondition,
+  } = useAttributeTable();
+  // Find the selected layer based on the selectedLayerId, and extract its properties.
+  const selectedLayer = layers.find((layer) => layer.id === selectedLayerId);
+  const properties = selectedLayer?.data.features[0]?.properties || {};
+  // state management for filter controls
+  const [selectedField, setSelectedField] = useState("");
+  const [selectedOperator, setSelectedOperator] = useState<
+    "=" | "!=" | ">" | "<" | ">=" | "<="
+  >("=");
+  const [filterValue, setFilterValue] = useState("");
+  // filter logic for an added filter condition
   const handleAddFilter = () => {
-    if (!selectedField || !filterValue) return
-
+    // Validate inputs
+    if (!selectedField || !filterValue) return;
+    // new filter condition
     addFilterCondition({
       field: selectedField,
       operator: selectedOperator,
-      value: filterValue
-    })
+      value: filterValue,
+    });
 
     // Reset inputs
-    setSelectedField("")
-    setSelectedOperator("=")
-    setFilterValue("")
-  }
+    setSelectedField("");
+    setSelectedOperator("=");
+    setFilterValue("");
+  };
 
   return (
     <div className="space-y-4">
       <div className="flex gap-8">
         <Select value={selectedField} onValueChange={setSelectedField}>
-          <SelectTrigger className="w-[180px] select-field" data-testid="select-field">
+          <SelectTrigger
+            className="w-[180px] select-field"
+            data-testid="select-field"
+          >
             <SelectValue placeholder="Select field" />
           </SelectTrigger>
           <SelectContent>
@@ -56,8 +68,14 @@ export function FilterControls() {
           </SelectContent>
         </Select>
 
-        <Select value={selectedOperator} onValueChange={(value: any) => setSelectedOperator(value)}>
-          <SelectTrigger className="w-[120px] operator-select" data-testid="operator-select">
+        <Select
+          value={selectedOperator}
+          onValueChange={(value: any) => setSelectedOperator(value)}
+        >
+          <SelectTrigger
+            className="w-[120px] operator-select"
+            data-testid="operator-select"
+          >
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -78,8 +96,8 @@ export function FilterControls() {
           data-testid="value-input"
         />
 
-        <Button 
-          className="ml-auto" 
+        <Button
+          className="ml-auto"
           onClick={handleAddFilter}
           data-testid="add-filter-btn"
         >
@@ -111,5 +129,5 @@ export function FilterControls() {
         </div>
       )}
     </div>
-  )
+  );
 }

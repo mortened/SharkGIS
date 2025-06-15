@@ -3,15 +3,11 @@ import type { Dispatch, SetStateAction, ReactElement } from "react";
 import * as turf from "@turf/turf";
 import type { AllGeoJSON } from "@turf/helpers";
 import { v4 as uuidv4 } from "uuid";
-
-// 👉 Type‑only imports (works with geojson types too)
 import type { Feature, Polygon, MultiPolygon, Position } from "geojson";
-
 import { useLayers } from "@/hooks/useLayers";
 import { ToolDialogShell } from "./ToolDialogShell";
 import { LayerSettingsForm } from "../layers/LayerSettingsForm";
 import { cn, getUniqueColor, getUniqueLayerName } from "@/lib/utils";
-
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -42,11 +38,12 @@ export function DifferenceDialog({
   open,
   onOpenChange,
 }: DifferenceDialogProps): ReactElement {
+  // state management
   const { layers, addLayer, removeLayer } = useLayers();
   const [runSteps, setRunSteps] = useState(false); // Whether to run the tutorial steps
   const [stepIndex, setStepIndex] = useState(0); // Track current step
   const [isLoading, setIsLoading] = useState(false); // Loading state for async operations
-
+  // Trigger for the tutorial book icon
   const bookTrigger = (
     <Button onClick={() => setRunSteps(true)} variant="secondary" size="icon">
       <BookText
@@ -54,7 +51,7 @@ export function DifferenceDialog({
       />
     </Button>
   );
-
+  // Handlers for tutorial steps
   function handleTutorialStop() {
     setRunSteps(false);
     setStepIndex(0); // Reset step index when tour stops
@@ -81,7 +78,7 @@ export function DifferenceDialog({
   // ───────────────────────────────────────────────────────── handlers ────
   async function onSave() {
     setIsLoading(true);
-
+    // Validate inputs
     const hasErr = !baseLayerId || subtractLayerIds.length === 0;
     setErrors({ base: !baseLayerId, subtract: subtractLayerIds.length === 0 });
 
@@ -89,16 +86,17 @@ export function DifferenceDialog({
       setIsLoading(false);
       return;
     }
-
+    // wrapped in a try-catch to handle async errors
     try {
       /* micro-delay so the loader is guaranteed to appear */
       await new Promise((r) => setTimeout(r, 0));
+      // if successful, call the difference handler
       const success = await handleDifference(
         baseLayerId!,
         subtractLayerIds,
         layerName
       );
-
+      // if the operation failed, show an error toast
       if (!success) {
         toastMessage({
           title: "Difference Failed",
@@ -137,7 +135,7 @@ export function DifferenceDialog({
     }
   }
 
-  /* helper */
+  // Reset form state
   function resetForm() {
     setBaseLayerId(null);
     setSubtractLayerIds([]);
@@ -161,7 +159,9 @@ export function DifferenceDialog({
     b: Feature<Polygon | MultiPolygon>
   ): Feature<Polygon | MultiPolygon> {
     try {
+      // Attempt turf union
       const res = turf.union(a as any, b as any);
+      // If union is successful, return the result
       if (res) return res as Feature<Polygon | MultiPolygon>;
     } catch (err: any) {
       if (
@@ -175,6 +175,7 @@ export function DifferenceDialog({
     }
     // manual merge fallback
     const coords: Position[][][] = [];
+    // Push coordinates from both features
     const pushCoords = (feat: Feature<Polygon | MultiPolygon>) => {
       if (feat.geometry.type === "Polygon")
         coords.push(feat.geometry.coordinates);
@@ -182,9 +183,9 @@ export function DifferenceDialog({
     };
     pushCoords(a);
     pushCoords(b);
+    // Create a MultiPolygon from the collected coordinates
     return turf.multiPolygon(coords) as Feature<Polygon | MultiPolygon>;
   }
-
   function safeDifference(
     a: Feature<Polygon | MultiPolygon>,
     b: Feature<Polygon | MultiPolygon>
@@ -197,7 +198,10 @@ export function DifferenceDialog({
     }
     return a;
   }
-
+  /**
+   * Handles the difference operation between a base layer and one or more subtract layers.
+   * Returns a promise that resolves to true if successful, false otherwise.
+   */
   async function handleDifference(
     baseId: string,
     subtractIds: string[],
@@ -248,20 +252,20 @@ export function DifferenceDialog({
             return;
           }
 
-          // diff
+          // perform difference, if difference is empty, return false
           const diffGeom = safeDifference(baseGeom, subtractGeom);
           if (!diffGeom) {
             console.warn("Difference resulted in no geometry");
             resolve(false);
             return;
           }
-
+          // output as a feature collection
           const outFeature = turf.feature(diffGeom.geometry);
           const outFC = turf.featureCollection([outFeature]);
           const geometryType = outFeature.geometry.type as
             | "Polygon"
             | "MultiPolygon";
-
+          // add the new layer
           addLayer(
             {
               data: outFC,
@@ -401,7 +405,7 @@ function DifferenceTool({
     setSubtractLayerIds((prev) => prev.filter((x) => x !== id)); // ensure not both base & subtract
     setBaseOpen(false);
   };
-
+  // base layer label
   const baseLabel = baseLayerId
     ? layers.find((l) => l.id === baseLayerId)?.name ?? "Choose base layer"
     : "Choose base layer";
