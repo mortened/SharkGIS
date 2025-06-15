@@ -98,7 +98,7 @@ npm run dev
 ## 👤 Author
 
 **Morten Sandbæk Edvardsen**  
-NTNU – Engineering Science and ICT (Geomatics)  
+NTNU – Engineering and ICT (Geomatics)  
 📎 https://github.com/mortened
 
 ---
